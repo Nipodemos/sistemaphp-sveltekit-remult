@@ -1,9 +1,14 @@
 // See https://kit.svelte.dev/docs/types#app
+
+import type { Usuario } from "./routes/sistema/usuarios/Usuario";
+
 // for information about these interfaces
 declare global {
   namespace App {
     // interface Error {}
-    // interface Locals {}
+    interface Locals {
+      usuario: Usuario | null;
+    }
     // interface PageData {}
     // interface PageState {}
     // interface Platform {}
