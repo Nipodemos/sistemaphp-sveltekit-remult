@@ -1,9 +1,11 @@
 import jwt from "jsonwebtoken";
-import { Usuario } from "../routes/sistema/usuarios/Usuario";
+import { Usuario } from "../routes/app/usuarios/Usuario.model";
 import { AUTH_SECRET } from "$env/static/private";
+import { repo } from "remult";
 
 export function createSessionToken(usuarioQuerendoLogar: Usuario): string {
-  return jwt.sign(usuarioQuerendoLogar, AUTH_SECRET, { expiresIn: "1h" });
+  const dados = repo(Usuario).toJson(usuarioQuerendoLogar);
+  return jwt.sign(dados, AUTH_SECRET, { expiresIn: "1h" });
 }
 
 export function verifySessionToken(token: string): Usuario | null {
