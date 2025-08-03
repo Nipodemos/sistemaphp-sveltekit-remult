@@ -1,0 +1,27 @@
+{
+  "name": "sistemaphp-sveltekit-remult",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "auth:generate": "pnpx @better-auth/cli@latest generate --config ./src/demo/auth/server/auth.ts --output ./src/demo/auth/authEntities.ts -y"
+  },
+  "devDependencies": {
+    "@nerdfolio/remult-better-auth": "0.3.1",
+    "@sveltejs/adapter-auto": "^3.3.1",
+    "@sveltejs/kit": "^2.21.2",
+    "@sveltejs/vite-plugin-svelte": "^5.1.0",
+    "better-auth": "1.2.12",
+    "remult": "latest",
+    "svelte": "^5.33.14",
+    "svelte-check": "^4.2.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-kit-routes": "^1.0.2"
+  },
+  "type": "module"
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "tq20c2xbAWkJdqO0d1aKBerUJsRS9zR9",
+    "accountId": "3Ku8VF3JER1xsqFyFo0BqGdikY6IrKvQ",
+    "providerId": "credential",
+    "userId": "3Ku8VF3JER1xsqFyFo0BqGdikY6IrKvQ",
+    "accessToken": "",
+    "refreshToken": "",
+    "idToken": "",
+    "accessTokenExpiresAt": "2025-08-03T02:41:37.013Z",
+    "refreshTokenExpiresAt": "2025-08-03T02:41:37.013Z",
+    "scope": "",
+    "password": "5db61d89a4327511706c42661707f9ec:61718e462ec99df4170c609353c040fcdaa54ed02c7e5d61fb6ede1becf3e0a8eca4025d9167028559efd65928362f1351349c4df2a23ee968b3e077dacc12b9",
+    "createdAt": "2025-08-03T02:41:37.014Z",
+    "updatedAt": "2025-08-03T02:41:37.014Z"
+  }
+]
