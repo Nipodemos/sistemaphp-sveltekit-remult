@@ -1,6 +1,6 @@
 // See https://kit.svelte.dev/docs/types#app
 
-import type { Usuario } from "./routes/sistema/usuarios/Usuario";
+import type { Usuario } from "./routes/app/usuarios/Usuario.model";
 
 // for information about these interfaces
 declare global {
