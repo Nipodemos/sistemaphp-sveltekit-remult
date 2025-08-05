@@ -1,5 +1,5 @@
 import { remultApi } from "remult/remult-sveltekit";
-import { Usuario } from "../routes/app/usuarios/Usuario.model";
+import { Usuario } from "../routes/app/usuarios/usuario.model";
 import { Funcao } from "$lib/enums/Funcao";
 import bcrypt from "bcrypt";
 

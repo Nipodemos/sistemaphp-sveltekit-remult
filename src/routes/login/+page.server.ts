@@ -3,7 +3,7 @@ import { createSessionToken } from "../../server/auth";
 import bcrypt from "bcrypt";
 import type { Actions } from "./$types";
 import { repo } from "remult";
-import { Usuario } from "../app/usuarios/Usuario.model";
+import { Usuario } from "../app/usuarios/usuario.model";
 
 export const actions: Actions = {
   default: async ({ request, cookies }) => {
