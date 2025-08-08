@@ -1,5 +1,6 @@
 import { Funcao } from "$lib/enums/Funcao";
-import { Fields, Entity } from "remult";
+import { Fields, Entity, Relations } from "remult";
+import { PermissaoUsuario } from "../../../shared/PermissaoUsuario";
 
 @Entity("usuarios")
 export class Usuario {
@@ -15,6 +16,13 @@ export class Usuario {
   @Fields.string({ minLength: 8 })
   senha = "";
 
+  @Fields.object<Usuario, string[]>({
+    valueConverter: {
+      toDb: (x) => (x ? x.join(",") : undefined),
+      fromDb: (x) => (x ? x.split(",") : undefined),
+    },
+  })
+  cargos: string[] = [];
 
   @Relations.toMany(() => PermissaoUsuario, { field: "usuarioId" })
   permissoes?: PermissaoUsuario[]; // Carrega todas as permissões para este usuário
