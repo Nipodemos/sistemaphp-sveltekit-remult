@@ -1,19 +1,29 @@
-import { route } from "$lib/ROUTES";
 import { Entity, Fields } from "remult";
 
-@Entity("telas")
+@Entity("telas", {})
 export class Tela {
   @Fields.id()
   id = "";
 
-  @Fields.string({})
+  @Fields.string()
   categoria = "";
 
   @Fields.string()
   descricao = "";
 
   @Fields.string()
-  rota = "";
+  url = "";
+
+  @Fields.integer()
+  ordem = 0;
+
+  @Fields.object<Tela, string[]>({
+    valueConverter: {
+      toDb: (x) => (x ? x.join(",") : undefined),
+      fromDb: (x) => (x ? x.split(",") : undefined),
+    },
+  })
+  permissoesPossiveis: string[] = [];
 
   @Fields.createdAt()
   criadoEm?: Date;
