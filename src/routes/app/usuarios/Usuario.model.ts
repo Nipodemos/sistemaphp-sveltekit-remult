@@ -15,8 +15,9 @@ export class Usuario {
   @Fields.string({ minLength: 8 })
   senha = "";
 
-  @Fields.enum(() => Funcao)
-  nivelPermissao = Funcao.Vendedor;
+
+  @Relations.toMany(() => PermissaoUsuario, { field: "usuarioId" })
+  permissoes?: PermissaoUsuario[]; // Carrega todas as permissões para este usuário
 
   @Fields.createdAt()
   criadoEm?: Date;

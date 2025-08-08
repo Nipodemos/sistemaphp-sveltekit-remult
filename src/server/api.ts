@@ -1,7 +1,19 @@
 import { remultApi } from "remult/remult-sveltekit";
 import { Usuario } from "../routes/app/usuarios/usuario.model";
-import { Funcao } from "$lib/enums/Funcao";
 import bcrypt from "bcrypt";
+import { PermissionsController } from "../shared/PermissaoController";
+import {
+  createPermissionsCheckObject,
+  type UserPermissionsObject,
+} from "$lib/types/permissoes";
+import type { UserInfo } from "remult";
+
+export interface UsuarioLogado extends UserInfo {
+  id: string;
+  nome: string;
+  cargos: string[];
+  permissions: UserPermissionsObject; // Nossa nova estrutura!
+}
 
 export const api = remultApi({
   admin: true,
@@ -16,20 +28,37 @@ export const api = remultApi({
       usuario.nome = "Administrador";
       usuario.login = "admin";
       usuario.senha = await bcrypt.hash("admin", 10); // Senha criptografada
-      usuario.nivelPermissao = Funcao.Master;
+      usuario.cargos = [
+        "administrador",
+        "supervisor",
+        "gerente",
+        "vendedor",
+        "caixa",
+      ];
       await repoUsuario.insert(usuario);
     }
   },
 
   getUser: async (event) => {
+    // Se não houver usuário na sessão do SvelteKit, não há usuário Remult
     if (!event.locals.usuario) {
       return undefined;
-    } else {
-      return {
-        ...event.locals.usuario,
-        name: event.locals.usuario.nome,
-        roles: [Funcao[event.locals.usuario.nivelPermissao]],
-      };
     }
+
+    // Busca as permissões no formato do banco de dados { vendas: ['criar'], ... }
+    const permissoesDoDb = await PermissionsController.getPermissoesDoUsuario(
+      event.locals.usuario.id
+    );
+
+    // Transforma para o formato que você quer: { vendas: { criar: true, ... } }
+    const permissionsForClient = createPermissionsCheckObject(permissoesDoDb);
+
+    // Retorna o objeto completo do usuário para a sessão do Remult
+    return {
+      id: event.locals.usuario.id,
+      nome: event.locals.usuario.nome,
+      roles: event.locals.usuario.cargos,
+      permissions: permissionsForClient, // <-- AQUI!
+    };
   },
 });
