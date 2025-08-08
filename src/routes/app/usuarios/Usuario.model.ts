@@ -16,7 +16,7 @@ export class Usuario {
   senha = "";
 
   @Fields.enum(() => Funcao)
-  nivelPermissao = Funcao.Caixa;
+  nivelPermissao = Funcao.Vendedor;
 
   @Fields.createdAt()
   criadoEm?: Date;
