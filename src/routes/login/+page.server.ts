@@ -39,6 +39,6 @@ export const actions: Actions = {
     });
 
     // Redireciona para a página de perfil
-    throw redirect(303, "/profile");
+    throw redirect(303, "/app");
   },
 };
