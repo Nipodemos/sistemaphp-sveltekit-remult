@@ -1,9 +1,9 @@
-import { redirect, type Actions } from "@sveltejs/kit";
+import { redirect } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
 
 export const load = (async ({ locals, url }) => {
   // O hook (hooks.server.ts) já tentou popular `locals.usuario`.
-  // Se o usuário não estiver logado, `locals.usuario` será `null`.
+  // Se o usuário não estiver logado, `locals.usuario` será `undefined`.
   if (!locals.usuario) {
     // Lança um redirecionamento para a página de login.
     // Incluímos `from` na URL para que possamos redirecionar de volta após o login.
