@@ -12,6 +12,7 @@ export interface UsuarioLogado extends UserInfo {
   id: string;
   nome: string;
   cargos: string[];
+  login: string;
   permissions: UserPermissionsObject; // Nossa nova estrutura!
 }
 
@@ -39,7 +40,7 @@ export const api = remultApi({
     }
   },
 
-  getUser: async (event) => {
+  getUser: async (event): Promise<UsuarioLogado | undefined> => {
     // Se não houver usuário na sessão do SvelteKit, não há usuário Remult
     if (!event.locals.usuario) {
       return undefined;
@@ -56,9 +57,13 @@ export const api = remultApi({
     // Retorna o objeto completo do usuário para a sessão do Remult
     return {
       id: event.locals.usuario.id,
+      name: event.locals.usuario.nome,
       nome: event.locals.usuario.nome,
       roles: event.locals.usuario.cargos,
-      permissions: permissionsForClient, // <-- AQUI!
+      cargos: event.locals.usuario.cargos,
+      login: event.locals.usuario.login,
+
+      permissions: permissionsForClient,
     };
   },
 });

@@ -35,7 +35,7 @@
   }
   initRemultSvelteReactivity();
 
-  remult.user = data.user;
+  remult.user = data.usuario;
 </script>
 
 {@render children?.()}

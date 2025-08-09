@@ -11,7 +11,9 @@
 const PAGES = {
   "/": `/`,
   "/app": `/app`,
-  "/app/usuarios/cadastrar_usuario": `/app/usuarios/cadastrar_usuario`,
+  "/app/permissoes_telas": `/app/permissoes_telas`,
+  "/app/usuarios": `/app/usuarios`,
+  "/app/usuarios/criar_editar": `/app/usuarios/criar_editar`,
   "/login": `/login`
 }
 
@@ -27,6 +29,7 @@ const SERVERS = {
  */
 const ACTIONS = {
   "logout /app": `/app?/logout`,
+  "save /app/usuarios/criar_editar": `/app/usuarios/criar_editar?/save`,
   "default /login": `/login`
 }
 
@@ -142,9 +145,9 @@ export function route<T extends keyof AllTypes>(key: T, ...params: any[]): strin
 * ```
 */
 export type KIT_ROUTES = {
-  PAGES: { '/': never, '/app': never, '/app/usuarios/cadastrar_usuario': never, '/login': never }
+  PAGES: { '/': never, '/app': never, '/app/permissoes_telas': never, '/app/usuarios': never, '/app/usuarios/criar_editar': never, '/login': never }
   SERVERS: Record<string, never>
-  ACTIONS: { 'logout /app': never, 'default /login': never }
+  ACTIONS: { 'logout /app': never, 'save /app/usuarios/criar_editar': never, 'default /login': never }
   LINKS: Record<string, never>
   Params: Record<string, never>
 }

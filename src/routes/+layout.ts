@@ -3,5 +3,5 @@ import type { LayoutLoad } from "./$types";
 
 export const load = (async (event) => {
   remult.useFetch(event.fetch);
-  return { user: event.data.user };
+  return { usuario: event.data.usuario };
 }) satisfies LayoutLoad;

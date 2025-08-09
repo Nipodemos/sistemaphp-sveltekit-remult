@@ -1,10 +1,6 @@
 // src/shared/PermissaoUsuario.ts
 import { Entity, Fields, Relations } from "remult";
-import {
-  type TelaPermissao,
-  type RegraPermissao,
-  permissoes,
-} from "$lib/types/permissoes";
+import { type TelaPermissao, permissoes } from "$lib/types/permissoes";
 import { Usuario } from "../routes/app/usuarios/usuario.model";
 
 @Entity("permissoesUsuario", {
