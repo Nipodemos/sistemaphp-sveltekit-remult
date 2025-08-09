@@ -1,4 +1,4 @@
 oi
-<form action="/logout" method="POST">
+<form action="?/logout" method="POST">
   <button type="submit">Deslogar</button>
 </form>

@@ -5,7 +5,7 @@ export const load = (async ({ locals, url }) => {
   // O hook (hooks.server.ts) já tentou popular `locals.usuario`.
   // Se o usuário não estiver logado, `locals.usuario` será `null`.
   console.log("locals.usuario :>> ", locals.usuario?.nome);
-  if (!locals.usuario) {
+  if (!locals.usuario && url.pathname !== "/login") {
     // Lança um redirecionamento para a página de login.
     // Incluímos `from` na URL para que possamos redirecionar de volta após o login.
     throw redirect(303, `/login?redirectTo=${url.pathname}`);
