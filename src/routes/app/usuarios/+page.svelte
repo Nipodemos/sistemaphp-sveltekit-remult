@@ -31,7 +31,7 @@
         </td>
         <td>
           {#each usuario.cargos as cargo}
-            <span>{cargo}</span>
+            <span>{cargo}</span>{" "}
           {/each}
         </td>
         <td>
