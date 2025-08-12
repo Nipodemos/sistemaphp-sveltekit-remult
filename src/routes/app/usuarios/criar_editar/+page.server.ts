@@ -1,7 +1,7 @@
 import { repo } from "remult";
 import type { PageServerLoad, Actions } from "./$types";
 import { Usuario } from "../usuario.model";
-import { PermissaoUsuario } from "../../../../shared/PermissaoUsuario";
+import { PermissaoUsuario } from "../../../../shared/PermissaoUsuario.model";
 import { redirect, fail } from "@sveltejs/kit";
 import { permissoes, type PermissoesUsuarioInput } from "$lib/types/permissoes";
 
