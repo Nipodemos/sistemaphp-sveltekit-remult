@@ -9,7 +9,6 @@
  * PAGES
  */
 const PAGES = {
-  "/": `/`,
   "/app": `/app`,
   "/app/permissoes_telas": `/app/permissoes_telas`,
   "/app/usuarios": `/app/usuarios`,
@@ -145,7 +144,7 @@ export function route<T extends keyof AllTypes>(key: T, ...params: any[]): strin
 * ```
 */
 export type KIT_ROUTES = {
-  PAGES: { '/': never, '/app': never, '/app/permissoes_telas': never, '/app/usuarios': never, '/app/usuarios/criar_editar': never, '/login': never }
+  PAGES: { '/app': never, '/app/permissoes_telas': never, '/app/usuarios': never, '/app/usuarios/criar_editar': never, '/login': never }
   SERVERS: Record<string, never>
   ACTIONS: { 'logout /app': never, 'save /app/usuarios/criar_editar': never, 'default /login': never }
   LINKS: Record<string, never>
