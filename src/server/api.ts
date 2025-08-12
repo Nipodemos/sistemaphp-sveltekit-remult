@@ -1,5 +1,6 @@
 import { remultApi } from "remult/remult-sveltekit";
 import { Usuario } from "../routes/app/usuarios/usuario.model";
+import { entities } from "../shared/entities";
 import bcrypt from "bcrypt";
 import { PermissionsController } from "../shared/PermissaoController";
 import {
@@ -18,7 +19,7 @@ export interface UsuarioLogado extends UserInfo {
 
 export const api = remultApi({
   admin: true,
-  entities: [Usuario],
+  entities: entities,
   initApi: async (remult) => {
     const repoUsuario = remult.repo(Usuario);
 
