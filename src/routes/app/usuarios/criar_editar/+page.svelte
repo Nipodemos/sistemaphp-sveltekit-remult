@@ -16,6 +16,8 @@
 
   let { data, form }: Props = $props();
 
+  const isEditing = !!data.user?.id;
+
   let user = $state<Usuario>(data.user || repo(Usuario).create());
   let confirmPassword = $state("");
   let showPassword = $state(false);
@@ -23,7 +25,11 @@
     data.userPermissions || {}
   );
 
-  const isEditing = !!data.user?.id;
+  // Se estiver editando, limpar a senha do objeto user para não exibi-la
+  if (isEditing && user.senha) {
+    user.senha = "";
+  }
+
   const availablePermissions = data.availablePermissions;
 
   // Lista de funções disponíveis
@@ -122,7 +128,9 @@
               bind:value={user.senha}
               required={!isEditing}
               minlength="8"
-              placeholder="Digite a senha"
+              placeholder={isEditing
+                ? "Digite a nova senha (deixe em branco para manter)"
+                : "Digite a senha"}
             />
             <button
               type="button"
