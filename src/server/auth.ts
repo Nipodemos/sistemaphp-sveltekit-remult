@@ -5,7 +5,7 @@ import { repo } from "remult";
 
 export function createSessionToken(usuarioQuerendoLogar: Usuario): string {
   const dados = repo(Usuario).toJson(usuarioQuerendoLogar);
-  return jwt.sign(dados, AUTH_SECRET, { expiresIn: "1h" });
+  return jwt.sign(dados, AUTH_SECRET, { expiresIn: "24h" });
 }
 
 export function verifySessionToken(token: string): Usuario | null {
