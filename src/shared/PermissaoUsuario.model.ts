@@ -1,11 +1,11 @@
 // src/shared/PermissaoUsuario.ts
-import { Entity, Fields, Relations } from "remult";
+import { Allow, Entity, Fields, Relations } from "remult";
 import { type TelaPermissao, permissoes } from "$lib/types/permissoes";
 import { Usuario } from "../routes/app/usuarios/usuario.model";
 
 @Entity("permissoesUsuario", {
-  // Não permitir que o cliente crie/delete diretamente, apenas via backend method
-  allowApiCrud: false,
+  allowApiCrud: Allow.authenticated, // Bloqueia completamente o acesso via API
+
   id: {
     usuarioId: true,
     tela: true,
