@@ -2,21 +2,11 @@
   import { repo } from "remult";
   import { Usuario } from "../usuario.model";
   import { Funcao } from "$lib/enums/Funcao";
-  import type { PageData, ActionData } from "./$types";
+  import type { PageProps } from "./$types";
   import { enhance } from "$app/forms";
   import type { PermissoesUsuarioInput } from "$lib/types/permissoes";
 
-  interface Props {
-    data: PageData & {
-      userPermissions: PermissoesUsuarioInput;
-      availablePermissions: typeof import("$lib/types/permissoes").permissoes;
-    };
-    form?: ActionData & { error?: string };
-  }
-
-  let { data, form }: Props = $props();
-
-  const isEditing = !!data.user?.id;
+  let { data, form }: PageProps = $props();
 
   let user = $state<Usuario>(data.user || repo(Usuario).create());
   let confirmPassword = $state("");
@@ -25,10 +15,31 @@
     data.userPermissions || {}
   );
 
-  // Se estiver editando, limpar a senha do objeto user para não exibi-la
-  if (isEditing && user.senha) {
-    user.senha = "";
-  }
+  // Reativo: atualizar dados quando a action retorna sucesso ou quando dados iniciais mudam
+  $effect(() => {
+    // Atualizar com dados da action (quando há sucesso)
+    if (form?.success) {
+      if (form.user) {
+        user = { ...form.user };
+        user.senha = ""; // Limpar senha para não exibir
+      }
+
+      if (form.userPermissions) {
+        userPermissions = { ...form.userPermissions };
+      }
+    } else {
+      // Atualizar com dados iniciais
+      user = data.user || repo(Usuario).create();
+      userPermissions = data.userPermissions || {};
+
+      // Se estiver editando, limpar a senha do objeto user para não exibi-la
+      if (data.user?.id && user.senha) {
+        user.senha = "";
+      }
+    }
+  });
+
+  const isEditing = !!data.user?.id;
 
   const availablePermissions = data.availablePermissions;
 
@@ -76,6 +87,14 @@
   {#if form?.error}
     <div>
       {form.error}
+    </div>
+  {/if}
+
+  {#if form?.success}
+    <div
+      style="background-color: #d4edda; color: #155724; padding: 10px; border: 1px solid #c3e6cb; border-radius: 4px; margin-bottom: 15px;"
+    >
+      ✅ {form.message}
     </div>
   {/if}
 

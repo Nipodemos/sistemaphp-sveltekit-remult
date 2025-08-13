@@ -2,8 +2,12 @@ import { repo } from "remult";
 import type { PageServerLoad, Actions } from "./$types";
 import { Usuario } from "../usuario.model";
 import { PermissaoUsuario } from "../../../../shared/PermissaoUsuario.model";
-import { redirect, fail } from "@sveltejs/kit";
-import { permissoes, type PermissoesUsuarioInput } from "$lib/types/permissoes";
+import { fail } from "@sveltejs/kit";
+import {
+  permissoes,
+  type PermissoesUsuarioInput,
+  type TelaPermissao,
+} from "$lib/types/permissoes";
 
 export const load: PageServerLoad = async ({ url }) => {
   const id = url.searchParams.get("id");
@@ -12,10 +16,14 @@ export const load: PageServerLoad = async ({ url }) => {
 
   if (id) {
     try {
-      user = await repo(Usuario).findFirst({ id });
+      user = await repo(Usuario).findFirst(
+        { id },
+        { include: { permissoes: true } }
+      );
       if (user) {
         // Carregar permissões do usuário
         const permissoesUsuario = user.permissoes;
+        console.log("user.permissoes :>> ", user.permissoes);
 
         // Organizar permissões por tela
         if (permissoesUsuario) {
@@ -56,11 +64,13 @@ export const actions: Actions = {
     }
 
     try {
-      let user: Usuario;
+      let user = repo(Usuario).create();
 
+      console.log("id :>> ", id);
       if (id) {
         // Editar usuário existente
         const foundUser = await repo(Usuario).findFirst({ id });
+        console.log("foundUser :>> ", foundUser);
         if (!foundUser) {
           return fail(404, { error: "Usuário não encontrado" });
         }
@@ -71,7 +81,8 @@ export const actions: Actions = {
           user.senha = senha;
         }
         user.cargos = cargos;
-        await repo(Usuario).save(user);
+        let usuarioAtualizado = await repo(Usuario).save(user);
+        console.log("usuarioAtualizado :>> ", usuarioAtualizado);
       } else {
         // Criar novo usuário
         if (!senha || senha.length < 8) {
@@ -99,22 +110,52 @@ export const actions: Actions = {
 
         // Adicionar novas permissões
         for (const [tela, regras] of Object.entries(permissoes)) {
+          const telaKey = tela as TelaPermissao; // Tipagem correta
+
           for (const regra of Object.keys(regras)) {
             const hasPermission =
               formData.get(`permission_${tela}_${regra}`) === "on";
             if (hasPermission) {
               const permissao = repo(PermissaoUsuario).create({
                 usuarioId: user.id,
-                tela: tela as any,
+                tela: telaKey, // Agora tipado corretamente
                 regra,
               });
-              await repo(PermissaoUsuario).save(permissao);
+              let permissaoCriada = await repo(PermissaoUsuario).save(
+                permissao
+              );
+              console.log("permissaoCriada :>> ", permissaoCriada);
             }
           }
         }
       }
 
-      redirect(302, "/app/usuarios");
+      // Recarregar as permissões para retornar dados atualizados
+      let userPermissions: PermissoesUsuarioInput = {};
+      if (user.id) {
+        const permissoesUsuario = await repo(PermissaoUsuario).find({
+          where: { usuarioId: user.id },
+        });
+
+        // Organizar permissões por tela
+        for (const permissao of permissoesUsuario) {
+          if (!userPermissions[permissao.tela]) {
+            userPermissions[permissao.tela] = [];
+          }
+          userPermissions[permissao.tela]!.push(permissao.regra as any);
+        }
+      }
+
+      // Retornar todos os dados de volta para a tela
+      return {
+        success: true,
+        message: id
+          ? "Usuário atualizado com sucesso!"
+          : "Usuário criado com sucesso!",
+        user: user,
+        userPermissions: userPermissions,
+        availablePermissions: permissoes,
+      };
     } catch (error) {
       if (error instanceof Response) throw error;
       console.error("Erro ao salvar usuário:", error);
