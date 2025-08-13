@@ -31,6 +31,15 @@ export class PermissaoUsuario {
   })
   tela: TelaPermissao = "vendas"; // Valor default apenas para satisfazer o tipo
 
-  @Fields.string()
+  @Fields.string<PermissaoUsuario>({
+    validate: (e, field) => {
+      // Validar se a regra existe para a tela específica
+      const tela = e.tela as TelaPermissao;
+      const regrasValidas = Object.keys(permissoes[tela] || {});
+      if (!regrasValidas.includes(field.value)) {
+        throw `Regra '${field.value}' é inválida para a tela '${tela}'.`;
+      }
+    },
+  })
   regra = ""; // Aqui guardamos 'visualizar', 'criar', etc.
 }

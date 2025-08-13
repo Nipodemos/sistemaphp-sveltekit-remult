@@ -15,29 +15,9 @@
     data.userPermissions || {}
   );
 
-  // Reativo: atualizar dados quando a action retorna sucesso ou quando dados iniciais mudam
-  $effect(() => {
-    // Atualizar com dados da action (quando há sucesso)
-    if (form?.success) {
-      if (form.user) {
-        user = { ...form.user };
-        user.senha = ""; // Limpar senha para não exibir
-      }
-
-      if (form.userPermissions) {
-        userPermissions = { ...form.userPermissions };
-      }
-    } else {
-      // Atualizar com dados iniciais
-      user = data.user || repo(Usuario).create();
-      userPermissions = data.userPermissions || {};
-
-      // Se estiver editando, limpar a senha do objeto user para não exibi-la
-      if (data.user?.id && user.senha) {
-        user.senha = "";
-      }
-    }
-  });
+  // Mensagens de feedback
+  let message = form?.success ? form.message : "";
+  let error = form?.error ?? "";
 
   const isEditing = !!data.user?.id;
 
@@ -84,17 +64,14 @@
     <a href="/app/usuarios">← Voltar</a>
   </div>
 
-  {#if form?.error}
-    <div>
-      {form.error}
-    </div>
+  {#if error}
+    <div class="error">{error}</div>
   {/if}
-
-  {#if form?.success}
+  {#if message}
     <div
       style="background-color: #d4edda; color: #155724; padding: 10px; border: 1px solid #c3e6cb; border-radius: 4px; margin-bottom: 15px;"
     >
-      ✅ {form.message}
+      ✅ {message}
     </div>
   {/if}
 
