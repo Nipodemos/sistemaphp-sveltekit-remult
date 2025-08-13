@@ -11,20 +11,26 @@ export const load: PageServerLoad = async ({ url }) => {
   let userPermissions: PermissoesUsuarioInput = {};
 
   if (id) {
-    user = await repo(Usuario).findFirst({ id });
-    if (user) {
-      // Carregar permissões do usuário
-      const permissoesUsuario = await repo(PermissaoUsuario).find({
-        where: { usuarioId: id },
-      });
+    try {
+      user = await repo(Usuario).findFirst({ id });
+      if (user) {
+        // Carregar permissões do usuário
+        const permissoesUsuario = user.permissoes;
 
-      // Organizar permissões por tela
-      for (const permissao of permissoesUsuario) {
-        if (!userPermissions[permissao.tela]) {
-          userPermissions[permissao.tela] = [];
+        // Organizar permissões por tela
+        if (permissoesUsuario) {
+          for (const permissao of permissoesUsuario) {
+            if (!userPermissions[permissao.tela]) {
+              userPermissions[permissao.tela] = [];
+            }
+            userPermissions[permissao.tela]!.push(permissao.regra as any);
+          }
         }
-        userPermissions[permissao.tela]!.push(permissao.regra as any);
       }
+    } catch (error) {
+      console.warn("Erro ao carregar usuário ou permissões:", error);
+      // Se houver erro ao carregar, continua com dados vazios
+      // A página ainda será renderizada, mas sem dados do usuário
     }
   }
 
@@ -108,7 +114,7 @@ export const actions: Actions = {
         }
       }
 
-      throw redirect(302, "/app/usuarios");
+      redirect(302, "/app/usuarios");
     } catch (error) {
       if (error instanceof Response) throw error;
       console.error("Erro ao salvar usuário:", error);
