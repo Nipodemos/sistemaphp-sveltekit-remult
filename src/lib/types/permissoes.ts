@@ -1,81 +1,111 @@
 export const permissoes = {
   vendas: {
-    visualizar: "Visualizar tela de vendas",
-    criar: "Criar novos registros de vendas",
-    editar: "Editar vendas existentes",
-    deletar: "Excluir registros de vendas",
-    relatorioGerencial: "Imprimir relatório gerencial",
-    relatorioComissao: "Imprimir relatório de comissões",
+    visualizar: {
+      descricao: "Visualizar tela de vendas",
+      temPermissao: false,
+    },
+    criar: {
+      descricao: "Criar novos registros de vendas",
+      temPermissao: false,
+    },
+    editar: {
+      descricao: "Editar vendas existentes",
+      temPermissao: false,
+    },
+    deletar: {
+      descricao: "Excluir registros de vendas",
+      temPermissao: false,
+    },
+    relatorioGerencial: {
+      descricao: "Imprimir relatório gerencial",
+      temPermissao: false,
+    },
+    relatorioComissao: {
+      descricao: "Imprimir relatório de comissões",
+      temPermissao: false,
+    },
   },
   estoque: {
-    visualizar: "Visualizar tela de estoque",
-    criar: "Criar novos produtos",
-    editar: "Editar produtos existentes",
-    deletar: "Excluir produtos",
-    relatorios: "Gerar relatórios de movimentação",
+    visualizar: {
+      descricao: "Visualizar tela de estoque",
+      temPermissao: false,
+    },
+    criar: {
+      descricao: "Criar novos produtos",
+      temPermissao: false,
+    },
+    editar: {
+      descricao: "Editar produtos existentes",
+      temPermissao: false,
+    },
+    deletar: {
+      descricao: "Excluir produtos",
+      temPermissao: false,
+    },
+    relatorios: {
+      descricao: "Gerar relatórios de movimentação",
+      temPermissao: false,
+    },
   },
   financeiro: {
-    visualizar: "Visualizar tela do financeiro",
-    criar: "Lançar novas contas",
-    editar: "Editar lançamentos",
-    deletar: "Excluir lançamentos",
-    baixarParcelas: "Realizar a baixa de parcelas",
-    refaturarParcelas: "Refaturar parcelas vencidas",
+    visualizar: {
+      descricao: "Visualizar tela do financeiro",
+      temPermissao: false,
+    },
+    criar: {
+      descricao: "Lançar novas contas",
+      temPermissao: false,
+    },
+    editar: {
+      descricao: "Editar lançamentos",
+      temPermissao: false,
+    },
+    deletar: {
+      descricao: "Excluir lançamentos",
+      temPermissao: false,
+    },
+    baixarParcelas: {
+      descricao: "Realizar a baixa de parcelas",
+      temPermissao: false,
+    },
+    refaturarParcelas: {
+      descricao: "Refaturar parcelas vencidas",
+      temPermissao: false,
+    },
   },
-} as const; // O "as const" transforma todo o objeto em tipos literais
+} as const;
 
-// --- Tipos Mágicos derivados da nossa Fonte da Verdade ---
-
-// 1. Gera um tipo com todas as telas disponíveis (ex: 'vendas' | 'estoque')
+// Tipos muito mais simples
 export type TelaPermissao = keyof typeof permissoes;
-
-// 2. Gera um tipo com todas as regras de uma tela específica
-// Ex: RegraPermissao<'vendas'> => 'visualizar' | 'criar' | 'editar' | ...
 export type RegraPermissao<T extends TelaPermissao> =
   keyof (typeof permissoes)[T];
 
-// 3. Estrutura de dados que o front-end usará para enviar as permissões
-// Ex: { vendas: ['visualizar', 'criar'], financeiro: ['baixarParcelas'] }
+// Para quando você precisar enviar apenas as permissões ativas (banco de dados)
 export type PermissoesUsuarioInput = {
-  // O Partial<> torna as telas opcionais, e o array de regras também
   [Screen in TelaPermissao]?: RegraPermissao<Screen>[];
 };
 
-export type UserPermissionsObject = {
-  [T in TelaPermissao]: {
-    [R in RegraPermissao<T>]: boolean;
-  };
-};
+// Tipo final completo com todas as permissões (temPermissao: boolean)
+export type PermissoesCompletas = typeof permissoes;
 
-export function createPermissionsCheckObject(
-  permissoesDoDb: PermissoesUsuarioInput
-): UserPermissionsObject {
-  // Inicializa o objeto com todas as permissões como 'false'
-  const finalPermissions = {} as UserPermissionsObject;
-  for (const tela in permissoes) {
-    const telaKey = tela as TelaPermissao;
-    finalPermissions[telaKey] = {} as any;
-    for (const regra in permissoes[telaKey]) {
-      const regraKey = regra as RegraPermissao<typeof telaKey>;
-      (finalPermissions[telaKey] as any)[regraKey] = false;
-    }
-  }
+// Função para criar objeto de permissões com base nas permissões ativas do usuário
+export function criarObjetoPermissoes(
+  permissoesAtivas: PermissoesUsuarioInput
+): PermissoesCompletas {
+  // Clona o objeto base com todas as permissões como false
+  const resultado = JSON.parse(JSON.stringify(permissoes));
 
-  // Preenche com 'true' para as permissões que o usuário realmente tem
-  for (const tela in permissoesDoDb) {
-    const telaKey = tela as TelaPermissao;
-    const regrasConcedidas = permissoesDoDb[telaKey] || [];
-    for (const regra of regrasConcedidas) {
-      if (
-        finalPermissions[telaKey] &&
-        finalPermissions[telaKey][
-          regra as keyof (typeof finalPermissions)[typeof telaKey]
-        ] !== undefined
-      ) {
-        (finalPermissions[telaKey] as any)[regra] = true;
+  // Ativa as permissões que o usuário tem
+  for (const tela in permissoesAtivas) {
+    const regras = permissoesAtivas[tela as keyof PermissoesUsuarioInput];
+    if (regras && resultado[tela]) {
+      for (const regra of regras) {
+        if (resultado[tela][regra]) {
+          resultado[tela][regra].temPermissao = true;
+        }
       }
     }
   }
 
-  return finalPermissions;
+  return resultado as PermissoesCompletas;
 }
