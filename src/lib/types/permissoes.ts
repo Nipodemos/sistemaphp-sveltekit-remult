@@ -86,26 +86,13 @@ export type PermissoesUsuarioInput = {
 };
 
 // Tipo final completo com todas as permissões (temPermissao: boolean)
-export type PermissoesCompletas = typeof permissoes;
+export type PermissoesCompletas = {
+  [K in keyof typeof permissoes]: {
+    [P in keyof (typeof permissoes)[K]]: {
+      descricao: string;
+      temPermissao: boolean;
+    };
+  };
+};
 
 // Função para criar objeto de permissões com base nas permissões ativas do usuário
-export function criarObjetoPermissoes(
-  permissoesAtivas: PermissoesUsuarioInput
-): PermissoesCompletas {
-  // Clona o objeto base com todas as permissões como false
-  const resultado = JSON.parse(JSON.stringify(permissoes));
-
-  // Ativa as permissões que o usuário tem
-  for (const tela in permissoesAtivas) {
-    const regras = permissoesAtivas[tela as keyof PermissoesUsuarioInput];
-    if (regras && resultado[tela]) {
-      for (const regra of regras) {
-        if (resultado[tela][regra]) {
-          resultado[tela][regra].temPermissao = true;
-        }
-      }
-    }
-  }
-
-  return resultado as PermissoesCompletas;
-}
