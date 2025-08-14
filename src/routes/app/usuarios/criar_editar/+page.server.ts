@@ -1,42 +1,30 @@
 import { repo } from "remult";
 import type { PageServerLoad, Actions } from "./$types";
-import { Usuario } from "../usuario.model";
-import { PermissaoUsuario } from "../../../../shared/PermissaoUsuario.model";
+import { Usuario } from "$shared/usuario/usuario.model";
+import { PermissaoUsuario } from "$shared/permissaoUsuario/permissaoUsuario.model";
 import { fail } from "@sveltejs/kit";
 import {
   permissoes,
   type TelaPermissao,
   type PermissoesCompletas,
 } from "$lib/types/permissoes";
+import { criarObjetoPermissoes } from "$lib/utils/utils";
 
 export const load: PageServerLoad = async ({ url }) => {
   const id = url.searchParams.get("id");
   let user = undefined;
-  let userPermissions: PermissoesCompletas = JSON.parse(
-    JSON.stringify(permissoes)
-  ); // Cópia com todas false
-
+  let permissoesCompletasUsuario: PermissoesCompletas = criarObjetoPermissoes();
   if (id) {
     try {
       user = await repo(Usuario).findFirst(
         { id },
         { include: { permissoes: true } }
       );
-      if (user) {
-        // Carregar permissões do usuário
-        const permissoesUsuario = user.permissoes;
-
-        // Direto do banco para o objeto final - muito mais eficiente!
-        if (permissoesUsuario) {
-          for (const permissao of permissoesUsuario) {
-            const tela = permissao.tela as keyof typeof userPermissions;
-            const regra = permissao.regra;
-            if ((userPermissions as any)[tela]?.[regra]) {
-              (userPermissions as any)[tela][regra].temPermissao = true;
-            }
-          }
-        }
+      if (!user) {
+        return fail(404, { error: "Usuário não encontrado" });
       }
+
+      permissoesCompletasUsuario = criarObjetoPermissoes(user.permissoes);
     } catch (error) {
       console.warn("Erro ao carregar usuário ou permissões:", error);
       // Se houver erro ao carregar, continua com dados vazios
@@ -44,7 +32,7 @@ export const load: PageServerLoad = async ({ url }) => {
     }
   }
 
-  return { user, userPermissions, availablePermissions: permissoes };
+  return { user, permissoesCompletasUsuario };
 };
 
 export const actions: Actions = {

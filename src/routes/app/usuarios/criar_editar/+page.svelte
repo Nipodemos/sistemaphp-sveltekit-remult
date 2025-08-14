@@ -1,6 +1,6 @@
 <script lang="ts">
   import { repo } from "remult";
-  import { Usuario } from "../../../../shared/usuario/usuario.model";
+  import { Usuario } from "$shared/usuario/usuario.model";
   import { Funcao } from "$lib/enums/Funcao";
   import type { PageProps } from "./$types";
   import { enhance } from "$app/forms";
@@ -9,9 +9,9 @@
   let { data, form }: PageProps = $props();
 
   let user = $state<Usuario>(data.user || repo(Usuario).create());
+  let permissoesCompletasUsuario = $state(data.permissoesCompletasUsuario);
   let confirmPassword = $state("");
   let showPassword = $state(false);
-  let userPermissions = $state<PermissoesCompletas>(data.userPermissions || {});
 
   // Mensagens de feedback
   let message = form?.success ? form.message : "";
@@ -19,26 +19,8 @@
 
   const isEditing = !!data.user?.id;
 
-  const availablePermissions = data.availablePermissions;
-
   // Lista de funções disponíveis
   const funcaoValues = Object.values(Funcao);
-
-  // Função para verificar se uma permissão está marcada
-  function isPermissionChecked(tela: string, regra: string): boolean {
-    return (
-      userPermissions[tela as keyof PermissoesCompletas]?.[regra]
-        ?.temPermissao || false
-    );
-  }
-
-  // Função para toggle de permissão
-  function togglePermission(tela: string, regra: string, checked: boolean) {
-    const telaKey = tela as keyof PermissoesCompletas;
-    if (userPermissions[telaKey]?.[regra]) {
-      (userPermissions[telaKey][regra] as any).temPermissao = checked;
-    }
-  }
 </script>
 
 <svelte:head>
@@ -159,7 +141,7 @@
     <div>
       <h2>Permissões por Tela</h2>
 
-      {#each Object.entries(availablePermissions) as [tela, regras]}
+      {#each permissoesCompletasUsuario as [tela, regras]}
         <div>
           <h3>
             {tela.charAt(0).toUpperCase() + tela.slice(1)}
