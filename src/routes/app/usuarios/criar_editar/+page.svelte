@@ -1,6 +1,6 @@
 <script lang="ts">
   import { repo } from "remult";
-  import { Usuario } from "../usuario.model";
+  import { Usuario } from "../../../../shared/usuario/usuario.model";
   import { Funcao } from "$lib/enums/Funcao";
   import type { PageProps } from "./$types";
   import { enhance } from "$app/forms";

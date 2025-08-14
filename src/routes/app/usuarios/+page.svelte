@@ -1,6 +1,6 @@
 <script lang="ts">
   import { repo } from "remult";
-  import { Usuario } from "./usuario.model";
+  import { Usuario } from "../../../shared/usuario/usuario.model";
 
   let usuarios = $state<Usuario[]>([]);
 
