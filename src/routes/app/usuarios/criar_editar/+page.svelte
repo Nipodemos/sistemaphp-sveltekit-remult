@@ -4,16 +4,14 @@
   import { Funcao } from "$lib/enums/Funcao";
   import type { PageProps } from "./$types";
   import { enhance } from "$app/forms";
-  import type { PermissoesUsuarioInput } from "$lib/types/permissoes";
+  import type { PermissoesCompletas } from "$lib/types/permissoes";
 
   let { data, form }: PageProps = $props();
 
   let user = $state<Usuario>(data.user || repo(Usuario).create());
   let confirmPassword = $state("");
   let showPassword = $state(false);
-  let userPermissions = $state<PermissoesUsuarioInput>(
-    data.userPermissions || {}
-  );
+  let userPermissions = $state<PermissoesCompletas>(data.userPermissions || {});
 
   // Mensagens de feedback
   let message = form?.success ? form.message : "";
@@ -29,27 +27,16 @@
   // Função para verificar se uma permissão está marcada
   function isPermissionChecked(tela: string, regra: string): boolean {
     return (
-      userPermissions[tela as keyof PermissoesUsuarioInput]?.includes(
-        regra as any
-      ) || false
+      userPermissions[tela as keyof PermissoesCompletas]?.[regra]
+        ?.temPermissao || false
     );
   }
 
   // Função para toggle de permissão
   function togglePermission(tela: string, regra: string, checked: boolean) {
-    const telaKey = tela as keyof PermissoesUsuarioInput;
-    if (!userPermissions[telaKey]) {
-      userPermissions[telaKey] = [] as any;
-    }
-
-    if (checked) {
-      if (!userPermissions[telaKey]?.includes(regra as any)) {
-        userPermissions[telaKey]?.push(regra as any);
-      }
-    } else {
-      userPermissions[telaKey] = userPermissions[telaKey]?.filter(
-        (r: string) => r !== regra
-      ) as any;
+    const telaKey = tela as keyof PermissoesCompletas;
+    if (userPermissions[telaKey]?.[regra]) {
+      (userPermissions[telaKey][regra] as any).temPermissao = checked;
     }
   }
 </script>
@@ -179,7 +166,7 @@
           </h3>
 
           <div>
-            {#each Object.entries(regras as Record<string, string>) as [regra, descricao]}
+            {#each Object.entries(regras) as [regra, permissaoInfo]}
               <label>
                 <input
                   type="checkbox"
@@ -190,7 +177,7 @@
                 />
                 <span>
                   <strong>{regra}:</strong>
-                  {descricao}
+                  {permissaoInfo.descricao}
                 </span>
               </label>
             {/each}

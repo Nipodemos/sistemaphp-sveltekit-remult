@@ -5,14 +5,16 @@ import { PermissaoUsuario } from "../../../../shared/PermissaoUsuario.model";
 import { fail } from "@sveltejs/kit";
 import {
   permissoes,
-  type PermissoesUsuarioInput,
   type TelaPermissao,
+  type PermissoesCompletas,
 } from "$lib/types/permissoes";
 
 export const load: PageServerLoad = async ({ url }) => {
   const id = url.searchParams.get("id");
   let user = undefined;
-  let userPermissions: PermissoesUsuarioInput = {};
+  let userPermissions: PermissoesCompletas = JSON.parse(
+    JSON.stringify(permissoes)
+  ); // Cópia com todas false
 
   if (id) {
     try {
@@ -23,15 +25,15 @@ export const load: PageServerLoad = async ({ url }) => {
       if (user) {
         // Carregar permissões do usuário
         const permissoesUsuario = user.permissoes;
-        console.log("user.permissoes :>> ", user.permissoes);
 
-        // Organizar permissões por tela
+        // Direto do banco para o objeto final - muito mais eficiente!
         if (permissoesUsuario) {
           for (const permissao of permissoesUsuario) {
-            if (!userPermissions[permissao.tela]) {
-              userPermissions[permissao.tela] = [];
+            const tela = permissao.tela as keyof typeof userPermissions;
+            const regra = permissao.regra;
+            if ((userPermissions as any)[tela]?.[regra]) {
+              (userPermissions as any)[tela][regra].temPermissao = true;
             }
-            userPermissions[permissao.tela]!.push(permissao.regra as any);
           }
         }
       }
@@ -131,18 +133,21 @@ export const actions: Actions = {
       }
 
       // Recarregar as permissões para retornar dados atualizados
-      let userPermissions: PermissoesUsuarioInput = {};
+      let userPermissions: PermissoesCompletas = JSON.parse(
+        JSON.stringify(permissoes)
+      );
       if (user.id) {
         const permissoesUsuario = await repo(PermissaoUsuario).find({
           where: { usuarioId: user.id },
         });
 
-        // Organizar permissões por tela
+        // Direto do banco para o objeto final - muito mais eficiente!
         for (const permissao of permissoesUsuario) {
-          if (!userPermissions[permissao.tela]) {
-            userPermissions[permissao.tela] = [];
+          const tela = permissao.tela as keyof typeof userPermissions;
+          const regra = permissao.regra;
+          if ((userPermissions as any)[tela]?.[regra]) {
+            (userPermissions as any)[tela][regra].temPermissao = true;
           }
-          userPermissions[permissao.tela]!.push(permissao.regra as any);
         }
       }
 

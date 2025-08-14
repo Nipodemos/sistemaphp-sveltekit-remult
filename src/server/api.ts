@@ -4,8 +4,8 @@ import { entities } from "../shared/entities";
 import bcrypt from "bcrypt";
 import { PermissionsController } from "../shared/PermissaoController";
 import {
-  createPermissionsCheckObject,
-  type UserPermissionsObject,
+  criarObjetoPermissoes,
+  type PermissoesCompletas,
 } from "$lib/types/permissoes";
 import type { UserInfo } from "remult";
 
@@ -14,7 +14,7 @@ export interface UsuarioLogado extends UserInfo {
   nome: string;
   cargos: string[];
   login: string;
-  permissions: UserPermissionsObject; // Nossa nova estrutura!
+  permissions: PermissoesCompletas; // Nossa nova estrutura!
 }
 
 export const api = remultApi({
@@ -52,8 +52,8 @@ export const api = remultApi({
       event.locals.usuario.id
     );
 
-    // Transforma para o formato que você quer: { vendas: { criar: true, ... } }
-    const permissionsForClient = createPermissionsCheckObject(permissoesDoDb);
+    // Transforma para o formato que você quer: { vendas: { criar: { descricao: '...', temPermissao: true } } }
+    const permissionsForClient = criarObjetoPermissoes(permissoesDoDb);
 
     // Retorna o objeto completo do usuário para a sessão do Remult
     return {
