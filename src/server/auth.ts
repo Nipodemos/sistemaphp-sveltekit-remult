@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { Usuario } from "../routes/app/usuarios/usuario.model";
+import { Usuario } from "$shared/usuario/usuario.model";
 import { AUTH_SECRET } from "$env/static/private";
 import { repo } from "remult";
 

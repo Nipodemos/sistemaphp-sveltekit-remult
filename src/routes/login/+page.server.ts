@@ -3,7 +3,8 @@ import { createSessionToken } from "../../server/auth";
 import bcrypt from "bcrypt";
 import type { Actions } from "./$types";
 import { repo } from "remult";
-import { Usuario } from "../app/usuarios/usuario.model";
+// Update the import path below to the correct location of usuario.model.ts
+import { Usuario } from "$shared/usuario/usuario.model";
 
 export const actions: Actions = {
   default: async ({ request, cookies }) => {
@@ -15,9 +16,12 @@ export const actions: Actions = {
       return fail(400, { login, error: "Login e senha são obrigatórios." });
     }
 
-    const user = await repo(Usuario).findFirst({
-      login,
-    });
+    const user = await repo(Usuario).findFirst(
+      {
+        login,
+      },
+      { include: { permissoes: true } }
+    );
     if (!user) {
       return fail(401, { login, error: "Usuário não encontrado." });
     }

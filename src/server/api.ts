@@ -1,13 +1,11 @@
 import { remultApi } from "remult/remult-sveltekit";
-import { Usuario } from "../routes/app/usuarios/usuario.model";
+import { Usuario } from "$shared/usuario/usuario.model";
 import { entities } from "../shared/entities";
 import bcrypt from "bcrypt";
-import { PermissionsController } from "../shared/PermissaoController";
-import {
-  criarObjetoPermissoes,
-  type PermissoesCompletas,
-} from "$lib/types/permissoes";
+import { PermissionsController } from "$shared/permissaoUsuario/permissaoUsuario.controller";
+import { type PermissoesCompletas } from "$lib/types/permissoes";
 import type { UserInfo } from "remult";
+import { criarObjetoPermissoes } from "$lib/utils/utils";
 
 export interface UsuarioLogado extends UserInfo {
   id: string;
@@ -46,14 +44,12 @@ export const api = remultApi({
     if (!event.locals.usuario) {
       return undefined;
     }
+    let usuario = event.locals.usuario;
 
     // Busca as permissões no formato do banco de dados { vendas: ['criar'], ... }
-    const permissoesDoDb = await PermissionsController.getPermissoesDoUsuario(
-      event.locals.usuario.id
-    );
+    const permissoesDoDb = usuario.permissoes;
 
-    // Transforma para o formato que você quer: { vendas: { criar: { descricao: '...', temPermissao: true } } }
-    const permissionsForClient = criarObjetoPermissoes(permissoesDoDb);
+    let permissionsForClient = criarObjetoPermissoes(permissoesDoDb);
 
     // Retorna o objeto completo do usuário para a sessão do Remult
     return {

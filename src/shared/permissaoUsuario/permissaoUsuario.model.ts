@@ -1,7 +1,7 @@
 // src/shared/PermissaoUsuario.ts
 import { Allow, Entity, Fields, Relations } from "remult";
 import { type TelaPermissao, permissoes } from "$lib/types/permissoes";
-import { Usuario } from "../routes/app/usuarios/usuario.model";
+import { Usuario } from "$shared/usuario/usuario.model";
 
 @Entity("permissoesUsuario", {
   allowApiCrud: Allow.authenticated, // Bloqueia completamente o acesso via API

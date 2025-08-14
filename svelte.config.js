@@ -14,6 +14,7 @@ const config = {
 		adapter: adapter(),
 		alias: {
 			'$modules': './src/modules',
+			'$shared': './src/shared',
 		}
 	}
 };

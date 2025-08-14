@@ -15,9 +15,9 @@
 // - Menos chance de esquecer de registrar entidades
 // - Manutenção simplificada
 
-import { Usuario } from "../routes/app/usuarios/usuario.model";
-import { PermissaoUsuario } from "./PermissaoUsuario.model";
-import { Tela } from "../routes/app/permissoes_telas/tela.model";
+import { Usuario } from "./usuario/usuario.model";
+import { PermissaoUsuario } from "./permissaoUsuario/permissaoUsuario.model";
+import { Tela } from "./tela/tela.model";
 import type { ClassType } from "remult";
 
 // 📝 Array centralizado de todas as entidades do sistema
