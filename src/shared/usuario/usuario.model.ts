@@ -1,6 +1,6 @@
 import { Funcao } from "$lib/enums/Funcao";
 import { Fields, Entity, Relations } from "remult";
-import { PermissaoUsuario } from "$shared/permissaoUsuario/permissaoUsuario.model";
+import { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
 
 @Entity("usuarios")
 export class Usuario {

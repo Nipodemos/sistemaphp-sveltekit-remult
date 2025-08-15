@@ -3,7 +3,7 @@ import {
   type PermissoesCompletas,
   type PermissoesUsuarioInput,
 } from "$lib/types/permissoes";
-import type { PermissaoUsuario } from "$shared/permissaoUsuario/permissaoUsuario.model";
+import type { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
 
 export function criarObjetoPermissoes(
   permissoesUsuarios?: PermissaoUsuario[]

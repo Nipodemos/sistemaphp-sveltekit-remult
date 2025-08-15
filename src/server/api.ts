@@ -2,7 +2,7 @@ import { remultApi } from "remult/remult-sveltekit";
 import { Usuario } from "$shared/usuario/usuario.model";
 import { entities } from "../shared/entities";
 import bcrypt from "bcrypt";
-import { PermissionsController } from "$shared/permissaoUsuario/permissaoUsuario.controller";
+import { PermissionsController } from "$shared/permissao_usuario/permissao_usuario.controller";
 import { type PermissoesCompletas } from "$lib/types/permissoes";
 import type { UserInfo } from "remult";
 import { criarObjetoPermissoes } from "$lib/utils/utils";
