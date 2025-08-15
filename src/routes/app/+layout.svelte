@@ -3,14 +3,19 @@
   const { children } = $props();
 </script>
 
-oi
-<form action="?/logout" method="POST">
-  <button type="submit">Deslogar</button>
-</form>
-{#each routes as route}
-  <div>
-    <a href={route}>{route}</a>
+<div style="display: flex; gap: 1rem;">
+  <div style=" border-right: 2px solid red">
+    <form action="?/logout" method="POST">
+      <button type="submit">Deslogar</button>
+    </form>
+    {#each routes as route}
+      <div>
+        <a href={route}>{route}</a>
+      </div>
+    {/each}
   </div>
-{/each}
 
-{@render children()}
+  <div>
+    {@render children()}
+  </div>
+</div>
