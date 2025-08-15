@@ -9,16 +9,14 @@
 // 3. Pronto! Ela será automaticamente incluída em:
 //    - Transport hooks (serialização automática)
 //    - API do Remult (CRUD endpoints)
-//
-// ✅ BENEFÍCIOS:
-// - Configuração única (DRY - Don't Repeat Yourself)
-// - Menos chance de esquecer de registrar entidades
-// - Manutenção simplificada
 
 import { Usuario } from "./usuario/usuario.model";
-import { PermissaoUsuario } from "./permissaoUsuario/permissaoUsuario.model";
+import { PermissaoUsuario } from "./permissao_usuario/permissao_usuario.model";
 import { Tela } from "./tela/tela.model";
 import type { ClassType } from "remult";
+import { Categoria } from "./categoria/categoria.model";
+import { Produto } from "./produto/produto.model";
+import { Fornecedor } from "./fornecedor/fornecedor.model";
 
 // 📝 Array centralizado de todas as entidades do sistema
 // Adicione novas entidades aqui e elas serão automaticamente registradas
@@ -26,7 +24,9 @@ export const entities: ClassType<any>[] = [
   Usuario,
   PermissaoUsuario,
   Tela,
-  // 👆 Adicione suas novas entidades aqui
+  Categoria,
+  Produto,
+  Fornecedor,
 ];
 
 // Função helper para obter a lista de entidades (opcional, para melhor tipagem)
