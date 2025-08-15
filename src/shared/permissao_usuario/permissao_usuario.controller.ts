@@ -5,7 +5,7 @@ import {
   type PermissoesUsuarioInput,
   type TelaPermissao,
 } from "$lib/types/permissoes";
-import { PermissaoUsuario } from "./permissaoUsuario.model";
+import { PermissaoUsuario } from "./permissao_usuario.model";
 
 export class PermissionsController {
   @BackendMethod({ allowed: true }) // Permite que usuários autenticados chamem
