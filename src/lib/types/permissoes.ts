@@ -86,11 +86,15 @@ export type PermissoesUsuarioInput = {
 };
 
 // Tipo final completo com todas as permissões (temPermissao: boolean)
+// Tipo final completo com todas as permissões (temPermissao: boolean)
+// Construído a partir do `permissoes` mas removendo `readonly`, para que
+// `temPermissao` possa ser mutável sempre que essa tipagem for usada.
+// Apenas `temPermissao` é mutável; as chaves e `descricao` permanecem readonly.
 export type PermissoesCompletas = {
-  [K in keyof typeof permissoes]: {
-    [P in keyof (typeof permissoes)[K]]: {
-      descricao: string;
-      temPermissao: boolean;
+  readonly [K in keyof typeof permissoes]: {
+    readonly [P in keyof (typeof permissoes)[K]]: {
+      readonly descricao: string;
+      temPermissao: boolean; // mutável
     };
   };
 };
