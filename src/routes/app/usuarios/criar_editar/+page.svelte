@@ -5,11 +5,15 @@
   import type { PageProps } from "./$types";
   import { enhance } from "$app/forms";
   import type { PermissoesCompletas } from "$lib/types/permissoes";
+  import { criarObjetoPermissoes } from "$lib/utils/utils";
+  import { permissoes } from "$lib/types/permissoes";
 
   let { data, form }: PageProps = $props();
 
   let user = $state<Usuario>(data.user || repo(Usuario).create());
-  let permissoesCompletasUsuario = $state(data.permissoesCompletasUsuario);
+  let permissoesCompletasUsuario = $state<PermissoesCompletas>(
+    data.permissoesCompletasUsuario ?? criarObjetoPermissoes()
+  );
   let confirmPassword = $state("");
   let showPassword = $state(false);
 
@@ -21,6 +25,42 @@
 
   // Lista de funções disponíveis
   const funcaoValues = Object.values(Funcao);
+
+  // Tipos auxiliares
+  type Tela = keyof PermissoesCompletas;
+
+  // Keys helpers para evitar erros de indexação no template
+  const telas = Object.keys(permissoesCompletasUsuario) as Tela[];
+
+  // Retorna as chaves (regras) de uma tela com tipagem correta
+  function regrasDaTela<T extends Tela>(t: T) {
+    return Object.keys(permissoesCompletasUsuario[t]) as Array<
+      keyof PermissoesCompletas[T]
+    >;
+  }
+
+  // Retorna a referência tipada para o objeto de permissão (para bind/alteração)
+  function getPermissao<T extends Tela, R extends keyof PermissoesCompletas[T]>(
+    tela: T,
+    regra: R
+  ) {
+    return permissoesCompletasUsuario[tela][regra];
+  }
+
+  function togglePermission<
+    T extends Tela,
+    R extends keyof PermissoesCompletas[T],
+  >(tela: T, regra: R, checked: boolean) {
+    getPermissao(tela, regra).temPermissao = checked;
+  }
+
+  // Informação adicional sobre a permissão (descrição), se existir
+  function permissaoInfo<
+    T extends Tela,
+    R extends keyof PermissoesCompletas[T],
+  >(tela: T, regra: R) {
+    return (permissoes as any)[tela]?.[regra] ?? { descricao: "" };
+  }
 </script>
 
 <svelte:head>
@@ -141,25 +181,25 @@
     <div>
       <h2>Permissões por Tela</h2>
 
-      {#each permissoesCompletasUsuario as [tela, regras]}
+      {#each telas as tela}
         <div>
           <h3>
-            {tela.charAt(0).toUpperCase() + tela.slice(1)}
+            {tela}
           </h3>
 
           <div>
-            {#each Object.entries(regras) as [regra, permissaoInfo]}
+            {#each regrasDaTela(tela) as regra}
               <label>
                 <input
                   type="checkbox"
                   name="permission_{tela}_{regra}"
-                  checked={isPermissionChecked(tela, regra)}
+                  checked={getPermissao(tela, regra).temPermissao}
                   onchange={(e) =>
                     togglePermission(tela, regra, e.currentTarget.checked)}
                 />
                 <span>
                   <strong>{regra}:</strong>
-                  {permissaoInfo.descricao}
+                  {permissaoInfo(tela, regra).descricao}
                 </span>
               </label>
             {/each}

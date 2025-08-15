@@ -1,8 +1,10 @@
 import { repo } from "remult";
+import { PermissionsController } from "$shared/permissao_usuario/permissao_usuario.controller";
 import type { PageServerLoad, Actions } from "./$types";
 import { Usuario } from "$shared/usuario/usuario.model";
-import { PermissaoUsuario } from "$shared/permissaoUsuario/permissaoUsuario.model";
+import { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
 import { fail } from "@sveltejs/kit";
+import bcrypt from "bcrypt";
 import {
   permissoes,
   type TelaPermissao,
@@ -12,19 +14,23 @@ import { criarObjetoPermissoes } from "$lib/utils/utils";
 
 export const load: PageServerLoad = async ({ url }) => {
   const id = url.searchParams.get("id");
-  let user = undefined;
+  const repoUsuario = repo(Usuario);
+  let user = repoUsuario.create();
   let permissoesCompletasUsuario: PermissoesCompletas = criarObjetoPermissoes();
   if (id) {
     try {
-      user = await repo(Usuario).findFirst(
+      let usuarioEncontrado = await repoUsuario.findFirst(
         { id },
         { include: { permissoes: true } }
       );
-      if (!user) {
+      if (!usuarioEncontrado) {
         return fail(404, { error: "Usuário não encontrado" });
       }
+      user = usuarioEncontrado;
 
-      permissoesCompletasUsuario = criarObjetoPermissoes(user.permissoes);
+      permissoesCompletasUsuario = criarObjetoPermissoes(
+        usuarioEncontrado.permissoes
+      );
     } catch (error) {
       console.warn("Erro ao carregar usuário ou permissões:", error);
       // Se houver erro ao carregar, continua com dados vazios
@@ -68,7 +74,7 @@ export const actions: Actions = {
         user.nome = nome;
         user.login = login;
         if (senha && senha.length >= 8) {
-          user.senha = senha;
+          user.senha = await bcrypt.hash("admin", 10); // Senha criptografada;
         }
         user.cargos = cargos;
         let usuarioAtualizado = await repo(Usuario).save(user);
@@ -79,6 +85,8 @@ export const actions: Actions = {
           return fail(400, { error: "Senha deve ter pelo menos 8 caracteres" });
         }
 
+        user.senha = await bcrypt.hash("admin", 10); // Senha criptografada;
+
         user = repo(Usuario).create({
           nome,
           login,
@@ -88,48 +96,42 @@ export const actions: Actions = {
         await repo(Usuario).save(user);
       }
 
-      // Salvar permissões
+      // Salvar permissões: construir objeto com as novas permissões e delegar
+      // para o controller que já contém a lógica de salvar (exclui+insere)
       if (user.id) {
-        // Remover permissões existentes
-        const existingPermissions = await repo(PermissaoUsuario).find({
-          where: { usuarioId: user.id },
-        });
-        for (const permission of existingPermissions) {
-          await repo(PermissaoUsuario).delete(permission);
-        }
-
-        // Adicionar novas permissões
+        // Construir PermissoesUsuarioInput a partir do form
+        const permissoesNovas: Record<string, string[]> = {};
         for (const [tela, regras] of Object.entries(permissoes)) {
-          const telaKey = tela as TelaPermissao; // Tipagem correta
-
+          const selecionadas: string[] = [];
           for (const regra of Object.keys(regras)) {
-            const hasPermission =
-              formData.get(`permission_${tela}_${regra}`) === "on";
-            if (hasPermission) {
-              const permissao = repo(PermissaoUsuario).create({
-                usuarioId: user.id,
-                tela: telaKey, // Agora tipado corretamente
-                regra,
-              });
-              let permissaoCriada = await repo(PermissaoUsuario).save(
-                permissao
-              );
-              console.log("permissaoCriada :>> ", permissaoCriada);
+            if (formData.get(`permission_${tela}_${regra}`) === "on") {
+              selecionadas.push(regra);
             }
           }
+          if (selecionadas.length) permissoesNovas[tela] = selecionadas;
         }
+
+        // Chama o método do controller para excluir e inserir permissões
+        await PermissionsController.salvarPermissoesDoUsuario(
+          user.id,
+          permissoesNovas as any
+        );
       }
 
-      // Recarregar as permissões para retornar dados atualizados
+      // Recarregar as permissões do DB e gerar o objeto completo com util
       let userPermissions: PermissoesCompletas = JSON.parse(
         JSON.stringify(permissoes)
       );
+      let permissoesCompletasUsuario: PermissoesCompletas =
+        criarObjetoPermissoes();
       if (user.id) {
         const permissoesUsuario = await repo(PermissaoUsuario).find({
           where: { usuarioId: user.id },
         });
+        // usar a função util para criar o objeto final de permissões
+        permissoesCompletasUsuario = criarObjetoPermissoes(permissoesUsuario);
 
-        // Direto do banco para o objeto final - muito mais eficiente!
+        // Também popular userPermissions no shape anterior para compatibilidade
         for (const permissao of permissoesUsuario) {
           const tela = permissao.tela as keyof typeof userPermissions;
           const regra = permissao.regra;
@@ -139,7 +141,7 @@ export const actions: Actions = {
         }
       }
 
-      // Retornar todos os dados de volta para a tela
+      // Retornar todos os dados de volta para a tela (inclui permissoesCompletasUsuario)
       return {
         success: true,
         message: id
@@ -147,7 +149,7 @@ export const actions: Actions = {
           : "Usuário criado com sucesso!",
         user: user,
         userPermissions: userPermissions,
-        availablePermissions: permissoes,
+        permissoesCompletasUsuario: permissoesCompletasUsuario,
       };
     } catch (error) {
       if (error instanceof Response) throw error;
