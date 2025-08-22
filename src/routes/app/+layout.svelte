@@ -4,7 +4,7 @@
 </script>
 
 <div style="display: flex; gap: 1rem;">
-  <div style=" border-right: 2px solid red">
+  <div style=" border-right: 2px solid red; padding-right: 1rem;">
     <form action="?/logout" method="POST">
       <button type="submit">Deslogar</button>
     </form>
