@@ -8,9 +8,6 @@ export class Categoria {
   @Fields.string()
   nome: string = "";
 
-  @Fields.string()
-  descricao: string = "";
-
   // Referência para a categoria pai (null = categoria raiz)
   @Relations.toOne(() => Categoria, {
     field: "categoriaPaiId",

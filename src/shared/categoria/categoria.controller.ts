@@ -5,14 +5,12 @@ export class CategoriaController {
   @BackendMethod({ allowed: true })
   static async criarCategoria(
     nome: string,
-    descricao: string,
     categoriaPaiId?: string
   ): Promise<Categoria> {
     const repo = remult.repo(Categoria);
 
     let categoria = repo.create();
     categoria.nome = nome;
-    categoria.descricao = descricao;
 
     if (categoriaPaiId) {
       const pai = await repo.findId(categoriaPaiId);
@@ -35,7 +33,6 @@ export class CategoriaController {
   static async editarCategoria(
     categoriaId: string,
     nome: string,
-    descricao: string,
     novoCategoriaPaiId?: string
   ): Promise<Categoria> {
     const repo = remult.repo(Categoria);
@@ -43,7 +40,6 @@ export class CategoriaController {
     if (!categoria) throw new Error("Categoria não encontrada");
 
     categoria.nome = nome;
-    categoria.descricao = descricao;
 
     // Se mudou o pai, atualizar hierarquia
     const paiAtualId = categoria.categoriaPai?.id;
@@ -141,35 +137,5 @@ export class CategoriaController {
     for (const sub of subcategorias) {
       await this.atualizarCaminhoRecursivo(sub.id);
     }
-  }
-
-  @BackendMethod({ allowed: true })
-  static async obterHierarquiaCompleta(): Promise<Categoria[]> {
-    const repo = remult.repo(Categoria);
-    return await repo.find({
-      where: { ativo: true },
-      orderBy: { caminho: "asc" },
-    });
-  }
-
-  @BackendMethod({ allowed: true })
-  static async obterCategoriasPorNivel(nivel: number): Promise<Categoria[]> {
-    const repo = remult.repo(Categoria);
-    return await repo.find({
-      where: { nivel, ativo: true },
-      orderBy: { nome: "asc" },
-    });
-  }
-
-  @BackendMethod({ allowed: true })
-  static async obterCategoriasRaiz(): Promise<Categoria[]> {
-    const repo = remult.repo(Categoria);
-    // Buscar todas e filtrar as que não têm pai
-    const todasCategorias = await repo.find({
-      where: { ativo: true },
-      orderBy: { nome: "asc" },
-    });
-
-    return todasCategorias.filter((cat) => !cat.categoriaPai);
   }
 }
