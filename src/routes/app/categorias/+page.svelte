@@ -11,6 +11,7 @@
 
   $effect(() => {
     carregando = true;
+    console.log("remult.authenticated() :>> ", remult.authenticated());
     repoCategoria
       .find()
       .then((result) => {
@@ -18,9 +19,8 @@
         categorias = result;
       })
       .catch((err) => {
-        erro =
-          "Erro ao carregar categorias: " +
-          (err instanceof Error ? err.message : String(err));
+        console.log("err :>> ", err);
+        erro = "Erro ao carregar categorias: " + err.message;
         carregando = false;
       });
   });

@@ -1,6 +1,6 @@
-import { Entity, Fields, Relations, BackendMethod, remult } from "remult";
+import { Entity, Fields, Relations, Allow } from "remult";
 
-@Entity("categorias", {})
+@Entity("categorias", { allowApiCrud: Allow.authenticated })
 export class Categoria {
   @Fields.id()
   id = "";

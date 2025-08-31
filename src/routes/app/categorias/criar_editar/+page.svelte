@@ -16,11 +16,6 @@
   let novoNivel2 = $state("");
   let novoNivel3 = $state("");
 
-  // Descrições
-  let descricaoNivel1 = $state("");
-  let descricaoNivel2 = $state("");
-  let descricaoNivel3 = $state("");
-
   // Categorias existentes
   let categoriasNivel1 = $state<Categoria[]>([]);
   let categoriasNivel2 = $state<Categoria[]>([]);
@@ -95,6 +90,7 @@
         erro = "Categoria não encontrada";
       }
     } catch (err) {
+      console.log("alan passou aqui 2");
       erro =
         "Erro ao carregar categoria: " +
         (err instanceof Error ? err.message : String(err));
@@ -109,6 +105,7 @@
           (cat) => cat.categoriaPai?.id === nivel1Id && cat.nivel === 2
         );
       } catch (err) {
+        console.log("alan passou aqui 3");
         erro =
           "Erro ao carregar categorias de nível 2: " +
           (err instanceof Error ? err.message : String(err));
@@ -130,6 +127,7 @@
           (cat) => cat.categoriaPai?.id === nivel2Id && cat.nivel === 3
         );
       } catch (err) {
+        console.log("alan passou aqui 4");
         erro =
           "Erro ao carregar categorias de nível 3: " +
           (err instanceof Error ? err.message : String(err));
@@ -261,6 +259,7 @@
         goto("/app/categorias");
       }, 1500);
     } catch (err) {
+      console.log("alan passou aqui 5");
       erro =
         "Erro ao salvar: " + (err instanceof Error ? err.message : String(err));
     } finally {
@@ -275,9 +274,6 @@
     novoNivel1 = "";
     novoNivel2 = "";
     novoNivel3 = "";
-    descricaoNivel1 = "";
-    descricaoNivel2 = "";
-    descricaoNivel3 = "";
     categoriasNivel2 = [];
     categoriasNivel3 = [];
   }
@@ -337,19 +333,6 @@
             placeholder="Nome da nova categoria"
           />
         </div>
-
-        {#if nivel1Id || novoNivel1}
-          <div>
-            <label for="descricaoNivel1">Descrição:</label>
-            <textarea
-              id="descricaoNivel1"
-              bind:value={descricaoNivel1}
-              disabled={salvando}
-              placeholder="Descrição da categoria"
-              rows="2"
-            ></textarea>
-          </div>
-        {/if}
       </div>
 
       <!-- Nível 2 -->
@@ -381,19 +364,6 @@
               placeholder="Nome da nova categoria"
             />
           </div>
-
-          {#if nivel2Id || novoNivel2}
-            <div>
-              <label for="descricaoNivel2">Descrição:</label>
-              <textarea
-                id="descricaoNivel2"
-                bind:value={descricaoNivel2}
-                disabled={salvando}
-                placeholder="Descrição da categoria"
-                rows="2"
-              ></textarea>
-            </div>
-          {/if}
         {:else}
           <p>Selecione ou crie uma categoria de nível 1 primeiro</p>
         {/if}
@@ -423,19 +393,6 @@
               placeholder="Nome da nova categoria"
             />
           </div>
-
-          {#if nivel3Id || novoNivel3}
-            <div>
-              <label for="descricaoNivel3">Descrição:</label>
-              <textarea
-                id="descricaoNivel3"
-                bind:value={descricaoNivel3}
-                disabled={salvando}
-                placeholder="Descrição da categoria"
-                rows="2"
-              ></textarea>
-            </div>
-          {/if}
 
           {#if nivel2Id || novoNivel2 || nivel3Id || novoNivel3}
             <div class="preview">

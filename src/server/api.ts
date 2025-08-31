@@ -40,8 +40,13 @@ export const api = remultApi({
   },
 
   getUser: async (event): Promise<UsuarioLogado | undefined> => {
-    // Se não houver usuário na sessão do SvelteKit, não há usuário Remult
+    console.log("🔍 getUser chamado");
+    console.log(
+      "🔍 event.locals.usuario:",
+      event.locals.usuario ? "presente" : "ausente"
+    );
     if (!event.locals.usuario) {
+      console.log("🔍 Nenhum usuário em locals");
       return undefined;
     }
     let usuario = event.locals.usuario;
@@ -50,7 +55,7 @@ export const api = remultApi({
     const permissoesDoDb = usuario.permissoes;
 
     let permissionsForClient = criarObjetoPermissoes(permissoesDoDb);
-
+    console.log("🔍 Retornando usuário:", event.locals.usuario.nome);
     // Retorna o objeto completo do usuário para a sessão do Remult
     return {
       id: event.locals.usuario.id,

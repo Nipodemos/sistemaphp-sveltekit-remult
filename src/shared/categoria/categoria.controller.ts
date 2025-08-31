@@ -1,8 +1,8 @@
-import { BackendMethod, remult } from "remult";
+import { Allow, BackendMethod, remult } from "remult";
 import { Categoria } from "./categoria.model";
 
 export class CategoriaController {
-  @BackendMethod({ allowed: true })
+  @BackendMethod({ allowed: Allow.authenticated })
   static async criarCategoria(
     nome: string,
     categoriaPaiId?: string
