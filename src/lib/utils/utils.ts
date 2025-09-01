@@ -3,7 +3,9 @@ import {
   type PermissoesCompletas,
   type PermissoesUsuarioInput,
 } from "$lib/types/permissoes";
+import { Categoria } from "$shared/categoria/categoria.model";
 import type { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
+import { remult } from "remult";
 
 export function criarObjetoPermissoes(
   permissoesUsuarios?: PermissaoUsuario[]
@@ -24,4 +26,33 @@ export function criarObjetoPermissoes(
   }
 
   return resultado as PermissoesCompletas;
+}
+
+export async function atualizarCaminho(categoriaId: string): Promise<void> {
+  const repo = remult.repo(Categoria);
+  const categoria = await repo.findId(categoriaId);
+  if (!categoria) return;
+
+  const caminhos: string[] = [];
+  const ids: string[] = [];
+
+  // Construir caminho completo
+  let atual: Categoria | undefined = categoria;
+  while (atual) {
+    caminhos.unshift(atual.nome);
+    ids.unshift(atual.id);
+
+    // Buscar o pai se existir
+    if (atual.categoriaPai?.id) {
+      const pai = await repo.findId(atual.categoriaPai.id);
+      atual = pai || undefined;
+    } else {
+      atual = undefined;
+    }
+  }
+
+  categoria.caminho = caminhos.join(" / ");
+  categoria.caminhoIds = ids.join(",");
+
+  await repo.save(categoria);
 }

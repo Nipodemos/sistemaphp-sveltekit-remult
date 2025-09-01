@@ -5,6 +5,7 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
+  import { atualizarCaminho } from "$lib/utils/utils";
 
   // Estados reativos para cada nível
   let nivel1Id = $state<string | null>(null);
@@ -176,7 +177,7 @@
         nivel1.nivel = 1;
         nivel1 = await repoCategoria.save(nivel1);
         // Atualizar caminho
-        await CategoriaController.atualizarCaminho(nivel1.id);
+        await atualizarCaminho(nivel1.id);
         // Atualizar lista de categorias
         categoriasNivel1 = [...categoriasNivel1, nivel1];
       }
@@ -198,7 +199,7 @@
         nivel2.categoriaPai = nivel1;
         nivel2 = await repoCategoria.save(nivel2);
         // Atualizar caminho
-        await CategoriaController.atualizarCaminho(nivel2.id);
+        await atualizarCaminho(nivel2.id);
         // Atualizar lista de categorias
         categoriasNivel2 = [...categoriasNivel2, nivel2];
       }
@@ -222,7 +223,7 @@
           nivel2.categoriaPai = nivel1;
           nivel2 = await repoCategoria.save(nivel2);
           // Atualizar caminho
-          await CategoriaController.atualizarCaminho(nivel2.id);
+          await atualizarCaminho(nivel2.id);
           // Atualizar lista de categorias
           categoriasNivel2 = [...categoriasNivel2, nivel2];
         }
@@ -234,7 +235,7 @@
         nivel3.categoriaPai = nivel2;
         nivel3 = await repoCategoria.save(nivel3);
         // Atualizar caminho
-        await CategoriaController.atualizarCaminho(nivel3.id);
+        await atualizarCaminho(nivel3.id);
       }
 
       // Se estiver em modo de edição, atualizar a categoria existente
