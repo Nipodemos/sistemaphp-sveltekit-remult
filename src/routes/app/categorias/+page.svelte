@@ -89,7 +89,7 @@
   <h1>Listagem de Categorias</h1>
 
   <div>
-    <a href="/app/categorias/assistente">
+    <a href="/app/categorias/criar_editar">
       <button>Nova Categoria</button>
     </a>
   </div>
@@ -119,6 +119,7 @@
             <tr>
               <td><strong>{categoria.caminho}</strong></td>
               <td>Nível {categoria.nivel}</td>
+              <td>{categoria.nome}</td>
               <td>
                 <a href="/app/categorias/assistente?id={categoria.id}">
                   Editar
