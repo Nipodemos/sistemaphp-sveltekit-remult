@@ -22,4 +22,4 @@ export const handleAuth: Handle = async ({ event, resolve }) => {
   return resolve(event);
 };
 
-export const handle = sequence(handleRemult, handleAuth);
+export const handle = sequence(handleAuth, handleRemult);
