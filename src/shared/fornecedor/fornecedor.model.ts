@@ -5,7 +5,9 @@ export class Fornecedor {
   @Fields.id()
   id = "";
 
-  @Fields.string()
+  @Fields.string({
+    validate: () => {},
+  })
   codigo!: string;
 
   @Fields.string()
