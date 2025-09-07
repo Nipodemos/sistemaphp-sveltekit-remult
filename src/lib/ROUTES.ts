@@ -12,6 +12,7 @@ const PAGES = {
   "/app": `/app`,
   "/app/categorias": `/app/categorias`,
   "/app/categorias/criar_editar": `/app/categorias/criar_editar`,
+  "/app/fornecedores": `/app/fornecedores`,
   "/app/permissoes_telas": `/app/permissoes_telas`,
   "/app/produtos": `/app/produtos`,
   "/app/produtos/criar_editar": `/app/produtos/criar_editar`,
@@ -148,7 +149,7 @@ export function route<T extends keyof AllTypes>(key: T, ...params: any[]): strin
 * ```
 */
 export type KIT_ROUTES = {
-  PAGES: { '/app': never, '/app/categorias': never, '/app/categorias/criar_editar': never, '/app/permissoes_telas': never, '/app/produtos': never, '/app/produtos/criar_editar': never, '/app/usuarios': never, '/app/usuarios/criar_editar': never, '/login': never }
+  PAGES: { '/app': never, '/app/categorias': never, '/app/categorias/criar_editar': never, '/app/fornecedores': never, '/app/permissoes_telas': never, '/app/produtos': never, '/app/produtos/criar_editar': never, '/app/usuarios': never, '/app/usuarios/criar_editar': never, '/login': never }
   SERVERS: Record<string, never>
   ACTIONS: { 'logout /app': never, 'save /app/usuarios/criar_editar': never, 'default /login': never }
   LINKS: Record<string, never>
