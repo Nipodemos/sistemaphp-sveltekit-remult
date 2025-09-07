@@ -36,7 +36,7 @@
   });
 
   $effect(() => {
-    // Resetar página quando pesquisa muda
+    pesquisa;
     pagina = 1;
   });
 
