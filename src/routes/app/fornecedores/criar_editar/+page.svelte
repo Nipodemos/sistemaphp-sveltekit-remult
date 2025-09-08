@@ -1,7 +1,6 @@
 <script lang="ts">
   import { remult } from "remult";
   import { Fornecedor } from "$shared/fornecedor/fornecedor.model";
-  import { FornecedorController } from "$shared/fornecedor/fornecedor.controller";
   import type { TipoDocumento } from "$shared/fornecedor/fornecedor.model";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -26,6 +25,7 @@
   let representanteCargo = $state("");
   let representanteTelefone = $state("");
   let representanteEmail = $state("");
+  let codigo = $state("");
 
   // Estados da aplicação
   let carregando = $state(true);
@@ -47,44 +47,41 @@
     if (fornecedorId) {
       modoEdicao = true;
       fornecedorIdEdicao = fornecedorId;
-      await carregarFornecedorParaEdicao(fornecedorId);
+      try {
+        const fornecedor = await repoFornecedor.findId(fornecedorId);
+        if (fornecedor) {
+          // Preencher os campos com os dados do fornecedor
+          razaoSocial = fornecedor.razaoSocial;
+          nomeFantasia = fornecedor.nomeFantasia;
+          tipoDocumento = fornecedor.tipoDocumento;
+          documento = fornecedor.documento;
+          rua = fornecedor.rua;
+          numero = fornecedor.numero;
+          complemento = fornecedor.complemento;
+          bairro = fornecedor.bairro;
+          cidade = fornecedor.cidade;
+          estado = fornecedor.estado;
+          cep = fornecedor.cep;
+          telefonePrincipal = fornecedor.telefonePrincipal;
+          telefoneSecundario = fornecedor.telefoneSecundario;
+          email = fornecedor.email;
+          representanteNome = fornecedor.representanteNome;
+          representanteCargo = fornecedor.representanteCargo;
+          representanteTelefone = fornecedor.representanteTelefone;
+          representanteEmail = fornecedor.representanteEmail;
+          codigo = fornecedor.codigo;
+        } else {
+          erro = "Fornecedor não encontrado";
+        }
+      } catch (err) {
+        erro =
+          "Erro ao carregar fornecedor: " +
+          (err instanceof Error ? err.message : String(err));
+      }
     }
 
     carregando = false;
   });
-
-  async function carregarFornecedorParaEdicao(fornecedorId: string) {
-    try {
-      const fornecedor = await repoFornecedor.findId(fornecedorId);
-      if (fornecedor) {
-        // Preencher os campos com os dados do fornecedor
-        razaoSocial = fornecedor.razaoSocial;
-        nomeFantasia = fornecedor.nomeFantasia;
-        tipoDocumento = fornecedor.tipoDocumento;
-        documento = fornecedor.documento;
-        rua = fornecedor.rua;
-        numero = fornecedor.numero;
-        complemento = fornecedor.complemento;
-        bairro = fornecedor.bairro;
-        cidade = fornecedor.cidade;
-        estado = fornecedor.estado;
-        cep = fornecedor.cep;
-        telefonePrincipal = fornecedor.telefonePrincipal;
-        telefoneSecundario = fornecedor.telefoneSecundario;
-        email = fornecedor.email;
-        representanteNome = fornecedor.representanteNome;
-        representanteCargo = fornecedor.representanteCargo;
-        representanteTelefone = fornecedor.representanteTelefone;
-        representanteEmail = fornecedor.representanteEmail;
-      } else {
-        erro = "Fornecedor não encontrado";
-      }
-    } catch (err) {
-      erro =
-        "Erro ao carregar fornecedor: " +
-        (err instanceof Error ? err.message : String(err));
-    }
-  }
 
   async function salvar() {
     try {
@@ -130,13 +127,15 @@
       };
 
       if (modoEdicao && fornecedorIdEdicao) {
-        await FornecedorController.editarFornecedor(
-          fornecedorIdEdicao,
-          fornecedorData
-        );
-        sucesso = "Fornecedor atualizado com sucesso!";
+        const fornecedor = await repoFornecedor.findId(fornecedorIdEdicao);
+        if (fornecedor) {
+          await repoFornecedor.save({ ...fornecedor, ...fornecedorData });
+          sucesso = "Fornecedor atualizado com sucesso!";
+        } else {
+          erro = "Fornecedor não encontrado para atualização.";
+        }
       } else {
-        await FornecedorController.criarFornecedor(fornecedorData);
+        await repoFornecedor.insert(fornecedorData);
         sucesso = "Fornecedor criado com sucesso!";
       }
 
@@ -228,13 +227,6 @@
 <div>
   <h1>{modoEdicao ? "Editar Fornecedor" : "Novo Fornecedor"}</h1>
 
-  {#if erro}
-    <div class="error">
-      <strong>Erro:</strong>
-      {erro}
-    </div>
-  {/if}
-
   {#if sucesso}
     <div class="success">
       <strong>Sucesso:</strong>
@@ -254,6 +246,10 @@
       <!-- Informações Básicas -->
       <div class="section">
         <h2>Informações Básicas</h2>
+
+        {#if modoEdicao && codigo}
+          <p>Código: {codigo}</p>
+        {/if}
 
         <div class="form-group">
           <label for="razaoSocial">Razão Social *</label>
@@ -479,6 +475,13 @@
           </div>
         </div>
       </div>
+
+      {#if erro}
+        <div class="error">
+          <strong>Erro:</strong>
+          {erro}
+        </div>
+      {/if}
 
       <div class="actions">
         <button type="submit" disabled={salvando}>

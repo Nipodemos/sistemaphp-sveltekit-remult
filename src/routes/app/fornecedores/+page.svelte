@@ -1,7 +1,6 @@
 <script lang="ts">
   import { remult } from "remult";
   import { Fornecedor } from "$shared/fornecedor/fornecedor.model";
-  import { FornecedorController } from "$shared/fornecedor/fornecedor.controller";
 
   // Estado reativo para armazenar os fornecedores
   let fornecedores = $state<Fornecedor[]>([]);
@@ -36,7 +35,7 @@
     }
 
     try {
-      await FornecedorController.excluirFornecedor(fornecedor.id);
+      await repoFornecedor.delete(fornecedor.id);
       fornecedores = fornecedores.filter((f) => f.id !== fornecedor.id);
     } catch (err) {
       alert(
