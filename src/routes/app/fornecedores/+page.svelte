@@ -2,29 +2,50 @@
   import { remult } from "remult";
   import { Fornecedor } from "$shared/fornecedor/fornecedor.model";
 
-  // Estado reativo para armazenar os fornecedores
   let fornecedores = $state<Fornecedor[]>([]);
   let carregando = $state(true);
   let erro = $state<string | null>(null);
+  let totalCount = $state(0);
   const repoFornecedor = remult.repo(Fornecedor);
 
+  let searchTerm = $state("");
+  let currentPage = $state(1);
+  let pageSize = $state(10);
+
+  let totalPages = $derived(Math.ceil(totalCount / pageSize));
+
   $effect(() => {
-    carregando = true;
-    console.log("remult.authenticated() :>> ", remult.authenticated());
-    repoFornecedor
-      .find()
-      .then((result) => {
-        carregando = false;
+    (async () => {
+      try {
+        carregando = true;
+        erro = null;
+        const where = searchTerm
+          ? {
+              $or: [
+                { razaoSocial: { $contains: searchTerm } },
+                { nomeFantasia: { $contains: searchTerm } },
+                { email: { $contains: searchTerm } },
+              ],
+            }
+          : undefined;
+        const result = await repoFornecedor.find({
+          limit: pageSize,
+          page: currentPage,
+          where,
+        });
         fornecedores = result;
-      })
-      .catch((err) => {
+        totalCount = await repoFornecedor.count(where);
+      } catch (err) {
         console.log("err :>> ", err);
-        erro = "Erro ao carregar fornecedores: " + err.message;
+        erro =
+          "Erro ao carregar fornecedores: " +
+          (err instanceof Error ? err.message : String(err));
+      } finally {
         carregando = false;
-      });
+      }
+    })();
   });
 
-  // Função para excluir um fornecedor
   async function excluirFornecedor(fornecedor: Fornecedor) {
     if (
       !confirm(
@@ -45,12 +66,9 @@
     }
   }
 
-  // Função para formatar documento
   function formatarDocumento(documento: string, tipo: string): string {
     if (!documento) return "";
-
     const limpo = documento.replace(/\D/g, "");
-
     if (tipo === "CPF" && limpo.length === 11) {
       return limpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
     } else if (tipo === "CNPJ" && limpo.length === 14) {
@@ -59,23 +77,30 @@
         "$1.$2.$3/$4-$5"
       );
     }
-
     return documento;
   }
 
-  // Função para formatar telefone
   function formatarTelefone(telefone: string): string {
     if (!telefone) return "";
-
     const limpo = telefone.replace(/\D/g, "");
-
     if (limpo.length === 11) {
       return limpo.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
     } else if (limpo.length === 10) {
       return limpo.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
     }
-
     return telefone;
+  }
+
+  function nextPage() {
+    if (currentPage < totalPages) {
+      currentPage++;
+    }
+  }
+
+  function prevPage() {
+    if (currentPage > 0) {
+      currentPage--;
+    }
   }
 </script>
 
@@ -89,9 +114,7 @@
   </div>
 
   {#if erro}
-    <div class="error">
-      {erro}
-    </div>
+    <div>{erro}</div>
   {/if}
 
   {#if carregando}
@@ -99,6 +122,15 @@
   {:else}
     <div>
       <h2>Fornecedores</h2>
+
+      <div>
+        <input
+          type="text"
+          placeholder="Pesquisar fornecedores..."
+          bind:value={searchTerm}
+        />
+      </div>
+
       <table>
         <thead>
           <tr>
@@ -115,7 +147,7 @@
         <tbody>
           {#each fornecedores as fornecedor}
             <tr>
-              <td><strong>{fornecedor.codigo}</strong></td>
+              <td>{fornecedor.codigo}</td>
               <td>{fornecedor.razaoSocial}</td>
               <td>{fornecedor.nomeFantasia}</td>
               <td
@@ -128,17 +160,26 @@
               <td>{fornecedor.email}</td>
               <td>{fornecedor.representanteNome}</td>
               <td>
-                <a href="/app/fornecedores/criar_editar?id={fornecedor.id}">
-                  Editar
-                </a>
-                <button onclick={() => excluirFornecedor(fornecedor)}>
-                  Excluir
-                </button>
+                <a href="/app/fornecedores/criar_editar?id={fornecedor.id}"
+                  >Editar</a
+                >
+                <button onclick={() => excluirFornecedor(fornecedor)}
+                  >Excluir</button
+                >
               </td>
             </tr>
           {/each}
         </tbody>
       </table>
+
+      <div>
+        <button onclick={prevPage} disabled={currentPage === 1}>Anterior</button
+        >
+        <span>Página {currentPage} de {totalPages}</span>
+        <button onclick={nextPage} disabled={currentPage >= totalPages}
+          >Próxima</button
+        >
+      </div>
 
       {#if fornecedores.length === 0}
         <p>Nenhum fornecedor encontrado.</p>
@@ -147,74 +188,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-
-  th,
-  td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-  }
-
-  th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-  }
-
-  tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-
-  tr:hover {
-    background-color: #f5f5f5;
-  }
-
-  button {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    margin-left: 5px;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-
-  button:hover {
-    background-color: #c82333;
-  }
-
-  a {
-    color: #007bff;
-    text-decoration: none;
-    margin-right: 10px;
-  }
-
-  a:hover {
-    text-decoration: underline;
-  }
-
-  .error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 16px;
-  }
-
-  h1 {
-    color: #333;
-    margin-bottom: 20px;
-  }
-
-  h2 {
-    color: #555;
-    margin-bottom: 10px;
-  }
-</style>
