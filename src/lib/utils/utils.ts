@@ -56,3 +56,50 @@ export async function atualizarCaminho(categoriaId: string): Promise<void> {
 
   await repo.save(categoria);
 }
+
+export interface PesquisaProduto {
+  codigoProduto: number | null;
+  codigoFornecedor: string | null;
+}
+
+export function processarPesquisaProduto(pesquisa: string): PesquisaProduto {
+  const resultado: PesquisaProduto = {
+    codigoProduto: null,
+    codigoFornecedor: null,
+  };
+
+  if (!pesquisa.trim()) {
+    return resultado;
+  }
+
+  // Dividir por underline se houver
+  const partes = pesquisa.split('_');
+
+  for (const parte of partes) {
+    const trimmed = parte.trim();
+    if (!trimmed) continue;
+
+    // Se for só números
+    if (/^\d+$/.test(trimmed)) {
+      const num = parseInt(trimmed.replace(/^0+/, '')) || null;
+      if (num !== null) {
+        resultado.codigoProduto = num;
+      }
+    }
+    // Se começar com P seguido de números
+    else if (/^P\d+$/.test(trimmed)) {
+      const numStr = trimmed.substring(1);
+      const num = parseInt(numStr.replace(/^0+/, '')) || null;
+      if (num !== null) {
+        resultado.codigoProduto = num;
+      }
+    }
+    // Se começar com F
+    else if (trimmed.startsWith('F') && trimmed.length > 1) {
+      resultado.codigoFornecedor = trimmed.substring(1);
+    }
+    // Caso contrário, ignorar ou considerar mal escrito
+  }
+
+  return resultado;
+}

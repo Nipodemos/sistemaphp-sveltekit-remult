@@ -1,14 +1,39 @@
 import { Categoria } from "$shared/categoria/categoria.model";
 import { Fornecedor } from "$shared/fornecedor/fornecedor.model";
-import { Entity, Fields, Relations } from "remult";
+import { Entity, Fields, Relations, remult } from "remult";
 
-@Entity("produtos", {})
+@Entity("produtos", {
+  saving: async (produto: Produto, e) => {
+    if (e.isNew) {
+      // Gerar código sequencial único
+      const repo = remult.repo(Produto);
+      const maxSequencial = await repo
+        .find({
+          orderBy: { codigoSequencial: "desc" },
+          limit: 1,
+          include: { fornecedor: {} },
+        })
+        .then((results) => results[0]?.codigoSequencial || 0);
+      produto.codigoSequencial = maxSequencial + 1;
+    }
+
+    // Gerar código de exibição
+    if (produto.fornecedor && produto.codigoSequencial) {
+      produto.codigo = `F${
+        produto.fornecedor.codigo
+      }_P${produto.codigoSequencial.toString().padStart(5, "0")}`;
+    }
+  },
+})
 export class Produto {
   @Fields.id()
   id = "";
 
   @Fields.string()
   codigo!: string;
+
+  @Fields.number()
+  codigoSequencial = 0;
 
   @Fields.string()
   descricao = "";

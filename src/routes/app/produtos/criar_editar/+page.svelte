@@ -8,7 +8,6 @@
   import { goto } from "$app/navigation";
 
   // Estados do formulário
-  let codigo = $state("");
   let descricao = $state("");
   let precoCusto = $state(0);
   let precoVenda = $state(0);
@@ -68,7 +67,6 @@
     try {
       const produto = await repoProduto.findId(produtoId);
       if (produto) {
-        codigo = produto.codigo;
         descricao = produto.descricao;
         precoCusto = produto.precoCusto;
         precoVenda = produto.precoVenda;
@@ -91,8 +89,8 @@
       sucesso = null;
 
       // Validações
-      if (!codigo.trim()) {
-        erro = "Código é obrigatório";
+      if (!fornecedorId) {
+        erro = "Fornecedor é obrigatório";
         return;
       }
 
@@ -120,7 +118,6 @@
       }
 
       // Preencher dados
-      produto.codigo = codigo.trim();
       produto.descricao = descricao.trim();
       produto.precoCusto = precoCusto;
       produto.precoVenda = precoVenda;
@@ -159,7 +156,6 @@
   }
 
   function limparFormulario() {
-    codigo = "";
     descricao = "";
     precoCusto = 0;
     precoVenda = 0;
@@ -194,17 +190,6 @@
         salvar();
       }}
     >
-      <div>
-        <label for="codigo">Código *</label>
-        <input
-          type="text"
-          id="codigo"
-          bind:value={codigo}
-          disabled={salvando}
-          required
-        />
-      </div>
-
       <div>
         <label for="descricao">Descrição</label>
         <input

@@ -1,43 +1,67 @@
 <script lang="ts">
-  import { remult, type FindOptions } from "remult";
+  import { remult, type EntityFilter, type FindOptions } from "remult";
   import { Produto } from "$shared/produto/produto.model";
+  import { processarPesquisaProduto } from "$lib/utils/utils";
 
   let produtos = $state<Produto[]>([]);
   let carregando = $state(true);
   let erro = $state<string | null>(null);
-  let pesquisa = $state("");
-  let pagina = $state(1);
+  let totalCount = $state(0);
   const repoProduto = remult.repo(Produto);
 
+  let searchTerm = $state("");
+  let currentPage = $state(1);
+  let pageSize = $state(10);
+
+  let totalPages = $derived(Math.ceil(totalCount / pageSize));
+
   $effect(() => {
-    carregando = true;
-    const query: FindOptions<Produto> = {
-      orderBy: { criadoEm: "desc" },
-      limit: 10,
-      page: pagina,
-    };
-
-    if (pesquisa.trim()) {
-      query.where = {
-        $or: [{ descricao: { $contains: pesquisa } }, { codigo: pesquisa }],
-      };
-    }
-
-    repoProduto
-      .find(query)
-      .then((result) => {
-        carregando = false;
+    (async () => {
+      try {
+        carregando = true;
+        erro = null;
+        // let where: any = undefined;
+        if (searchTerm.trim()) {
+          const { codigoProduto, codigoFornecedor } =
+            processarPesquisaProduto(searchTerm);
+          await repoProduto.find({
+            where: {
+              $or: [
+                { descricao: { $contains: searchTerm } },
+                { codigo: { $contains: searchTerm } },
+              ],
+            },
+          });
+          const conditions: EntityFilter<Produto>[] = [];
+          if (codigoProduto !== null) {
+            conditions.push({ codigo: codigoProduto });
+          }
+          if (codigoFornecedor) {
+            conditions.push({ fornecedor: { codigo: codigoFornecedor } });
+          }
+          // Se for número, buscar por sequencial
+          if (!isNaN(Number(searchTerm))) {
+            conditions.push({ codigoSequencial: Number(searchTerm) });
+          }
+          where = { $or: conditions };
+        }
+        const result = await repoProduto.find({
+          limit: pageSize,
+          page: currentPage,
+          where,
+          include: { fornecedor: true, categoria: true },
+        });
         produtos = result;
-      })
-      .catch((err) => {
-        erro = "Erro ao carregar produtos: " + err.message;
+        totalCount = await repoProduto.count(where);
+      } catch (err) {
+        console.log("err :>> ", err);
+        erro =
+          "Erro ao carregar produtos: " +
+          (err instanceof Error ? err.message : String(err));
+      } finally {
         carregando = false;
-      });
-  });
-
-  $effect(() => {
-    pesquisa;
-    pagina = 1;
+      }
+    })();
   });
 
   async function excluirProduto(produto: Produto) {
@@ -52,6 +76,7 @@
     try {
       await repoProduto.delete(produto.id);
       produtos = produtos.filter((p) => p.id !== produto.id);
+      totalCount -= 1;
     } catch (err) {
       alert(
         "Erro ao excluir produto: " +
@@ -60,15 +85,15 @@
     }
   }
 
-  function paginaAnterior() {
-    if (pagina > 1) {
-      pagina -= 1;
+  function nextPage() {
+    if (currentPage < totalPages) {
+      currentPage++;
     }
   }
 
-  function paginaProxima() {
-    if (produtos.length === 10) {
-      pagina += 1;
+  function prevPage() {
+    if (currentPage > 1) {
+      currentPage--;
     }
   }
 </script>
@@ -85,7 +110,7 @@
   <div>
     <input
       type="text"
-      bind:value={pesquisa}
+      bind:value={searchTerm}
       placeholder="Pesquisar por descrição ou código"
     />
   </div>
@@ -133,11 +158,10 @@
 
     {#if produtos.length > 0}
       <div>
-        <button onclick={paginaAnterior} disabled={pagina === 1}
-          >Anterior</button
+        <button onclick={prevPage} disabled={currentPage === 1}>Anterior</button
         >
-        <span>Página {pagina}</span>
-        <button onclick={paginaProxima} disabled={produtos.length < 10}
+        <span>Página {currentPage} de {totalPages}</span>
+        <button onclick={nextPage} disabled={currentPage >= totalPages}
           >Próxima</button
         >
       </div>
