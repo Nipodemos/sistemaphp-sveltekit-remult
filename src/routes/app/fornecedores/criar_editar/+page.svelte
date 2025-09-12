@@ -22,7 +22,6 @@
   let telefoneSecundario = $state("");
   let email = $state("");
   let representanteNome = $state("");
-  let representanteCargo = $state("");
   let representanteTelefone = $state("");
   let representanteEmail = $state("");
   let codigo = $state("");
@@ -66,7 +65,6 @@
           telefoneSecundario = fornecedor.telefoneSecundario;
           email = fornecedor.email;
           representanteNome = fornecedor.representanteNome;
-          representanteCargo = fornecedor.representanteCargo;
           representanteTelefone = fornecedor.representanteTelefone;
           representanteEmail = fornecedor.representanteEmail;
           codigo = fornecedor.codigo;
@@ -121,7 +119,6 @@
         telefoneSecundario: telefoneSecundario.trim(),
         email: email.trim(),
         representanteNome: representanteNome.trim(),
-        representanteCargo: representanteCargo.trim(),
         representanteTelefone: representanteTelefone.trim(),
         representanteEmail: representanteEmail.trim(),
       };
@@ -167,7 +164,6 @@
     telefoneSecundario = "";
     email = "";
     representanteNome = "";
-    representanteCargo = "";
     representanteTelefone = "";
     representanteEmail = "";
   }
@@ -248,7 +244,7 @@
         <h2>Informações Básicas</h2>
 
         {#if modoEdicao && codigo}
-          <p>Código: {codigo}</p>
+          <p><strong>Código:</strong> {codigo}</p>
         {/if}
 
         <div class="form-group">
@@ -436,16 +432,6 @@
               type="text"
               id="representanteNome"
               bind:value={representanteNome}
-              disabled={salvando}
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="representanteCargo">Cargo</label>
-            <input
-              type="text"
-              id="representanteCargo"
-              bind:value={representanteCargo}
               disabled={salvando}
             />
           </div>

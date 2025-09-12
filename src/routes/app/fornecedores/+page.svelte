@@ -137,7 +137,9 @@
             <th>Código</th>
             <th>Razão Social</th>
             <th>Nome Fantasia</th>
+            <th>Tipo</th>
             <th>Documento</th>
+            <th>Cidade</th>
             <th>Telefone</th>
             <th>Email</th>
             <th>Representante</th>
@@ -150,12 +152,14 @@
               <td>{fornecedor.codigo}</td>
               <td>{fornecedor.razaoSocial}</td>
               <td>{fornecedor.nomeFantasia}</td>
+              <td>{fornecedor.tipoDocumento}</td>
               <td
                 >{formatarDocumento(
                   fornecedor.documento,
                   fornecedor.tipoDocumento
                 )}</td
               >
+              <td>{fornecedor.cidade}</td>
               <td>{formatarTelefone(fornecedor.telefonePrincipal)}</td>
               <td>{fornecedor.email}</td>
               <td>{fornecedor.representanteNome}</td>
