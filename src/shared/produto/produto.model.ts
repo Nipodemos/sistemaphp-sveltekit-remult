@@ -1,6 +1,8 @@
 import { Categoria } from "$shared/categoria/categoria.model";
 import { Fornecedor } from "$shared/fornecedor/fornecedor.model";
-import { Entity, Fields, Relations, remult } from "remult";
+import { Entity, Fields, Relations, remult, Validators } from "remult";
+import { tipoVariacao } from "$lib/types/variacao.types";
+import type { TypeTipoVariacao } from "$lib/types/variacao.types";
 
 @Entity("produtos", {
   saving: async (produto: Produto, e) => {
@@ -9,19 +11,18 @@ import { Entity, Fields, Relations, remult } from "remult";
       const repo = remult.repo(Produto);
       const maxSequencial = await repo
         .find({
-          orderBy: { codigoSequencial: "desc" },
+          orderBy: { codigo: "desc" },
           limit: 1,
-          include: { fornecedor: {} },
         })
-        .then((results) => results[0]?.codigoSequencial || 0);
-      produto.codigoSequencial = maxSequencial + 1;
-    }
-
-    // Gerar código de exibição
-    if (produto.fornecedor && produto.codigoSequencial) {
-      produto.codigo = `F${
-        produto.fornecedor.codigo
-      }_P${produto.codigoSequencial.toString().padStart(5, "0")}`;
+        .then((results) => (results[0] ? parseInt(results[0].codigo) : 0));
+      const novoNumero = maxSequencial + 1;
+      produto.codigo = novoNumero.toString();
+      produto.fornecedorId = produto.fornecedor.id;
+    } else {
+      // Checagem para não permitir alteração do fornecedor
+      if (produto.fornecedor.id !== produto.fornecedorId) {
+        throw new Error("Não é permitido alterar o fornecedor do produto");
+      }
     }
   },
 })
@@ -29,22 +30,64 @@ export class Produto {
   @Fields.id()
   id = "";
 
-  @Fields.string()
+  @Fields.string({
+    valueConverter: {
+      toDb: (value: string) => value.replace("PROD", ""), // Salva apenas o número como string no banco
+      fromDb: (value: string) => `PROD${value}`, // Adiciona prefixo ao carregar
+    },
+  })
   codigo!: string;
 
-  @Fields.number()
-  codigoSequencial = 0;
+  @Fields.string({
+    validate: Validators.required,
+  })
+  categoriaId = "";
 
-  @Fields.string()
+  @Fields.string({
+    validate: Validators.required,
+  })
+  fornecedorId = "";
+
+  @Fields.string({
+    validate: Validators.required,
+  })
   descricao = "";
 
-  @Fields.number()
+  @Fields.number({
+    validate: [
+      Validators.required,
+      (entity: Produto) => {
+        if (entity.precoCusto <= 0) {
+          throw new Error("Preço de custo deve ser maior que zero");
+        }
+      },
+    ],
+  })
   precoCusto = 0;
 
-  @Fields.number()
+  @Fields.number({
+    validate: [
+      Validators.required,
+      (entity: Produto) => {
+        if (entity.precoVenda <= 0) {
+          throw new Error("Preço de venda deve ser maior que zero");
+        }
+      },
+    ],
+  })
   precoVenda = 0;
 
-  // Apenas UMA referência para a categoria final (nível mais baixo)
+  @Fields.enum(() => ["UN", "KG", "LT", "M"] as const)
+  unidadeMedida: "UN" | "KG" | "LT" | "M" = "UN";
+
+  @Fields.literal(() => tipoVariacao)
+  variacao1!: TypeTipoVariacao;
+
+  @Fields.literal(() => tipoVariacao)
+  variacao2!: TypeTipoVariacao;
+  @Fields.literal(() => tipoVariacao)
+  variacao3!: TypeTipoVariacao;
+
   @Relations.toOne(() => Categoria, { field: "categoriaId" })
   categoria!: Categoria;
 
@@ -54,6 +97,6 @@ export class Produto {
   @Fields.updatedAt()
   alteradoEm?: Date;
 
-  @Relations.toOne(() => Fornecedor, {})
+  @Relations.toOne(() => Fornecedor, { field: "fornecedorId" })
   fornecedor!: Fornecedor;
 }
