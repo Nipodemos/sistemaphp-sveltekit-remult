@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [sveltekit(), kitRoutes<KIT_ROUTES>()],
   test: {
     include: ["src/**/*.{test,spec}.{js,ts}"],
-    environment: "jsdom",
+    environment: "node",
+    setupFiles: ["./src/test-setup.ts"],
   },
 });
