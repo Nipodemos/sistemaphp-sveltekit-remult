@@ -208,3 +208,72 @@ export function validarTelefone(telefone: string): boolean {
 
   return true;
 }
+
+export function validarEmail(email: string): boolean {
+  if (!email || typeof email !== "string") {
+    return false;
+  }
+
+  // Expressão regular para validar email
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+  return emailRegex.test(email.trim());
+}
+
+export function validarEstado(estado: string): boolean {
+  if (!estado || typeof estado !== "string") {
+    return false;
+  }
+
+  const estadoLimpo = estado.trim().toUpperCase();
+
+  // Lista de UFs válidas do Brasil
+  const ufsValidas = [
+    "AC",
+    "AL",
+    "AP",
+    "AM",
+    "BA",
+    "CE",
+    "DF",
+    "ES",
+    "GO",
+    "MA",
+    "MT",
+    "MS",
+    "MG",
+    "PA",
+    "PB",
+    "PR",
+    "PE",
+    "PI",
+    "RJ",
+    "RN",
+    "RS",
+    "RO",
+    "RR",
+    "SC",
+    "SP",
+    "SE",
+    "TO",
+  ];
+
+  return ufsValidas.includes(estadoLimpo);
+}
+
+export function validarUUIDv4(uuid: string): boolean {
+  if (!uuid || typeof uuid !== "string") {
+    return false;
+  }
+
+  // Expressão regular para validar UUID v4
+  // Formato: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  // Onde x é qualquer dígito hexadecimal (0-9, a-f, A-F)
+  // O 4 na terceira posição é obrigatório
+  // O y na quarta posição deve ser 8, 9, a, ou b
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  return uuidRegex.test(uuid.trim());
+}
