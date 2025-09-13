@@ -1,6 +1,7 @@
-import { validarUUIDv4, atualizarCaminho } from "$lib/utils/utils";
-import { Entity, Fields, Relations, Allow, Validators } from "remult";
+import { validarUUIDv4 } from "$lib/utils/utils";
+import { Entity, Fields, Relations, Allow } from "remult";
 import { remult } from "remult";
+const util = require("util");
 
 @Entity<Categoria>("categorias", {
   allowApiCrud: Allow.authenticated,
@@ -8,6 +9,29 @@ import { remult } from "remult";
     // Para registros existentes, buscar o valor original para validações
     let categoriaOriginal: Categoria | null = null;
     const repo = remult.repo(Categoria);
+
+    // Para registros existentes, buscar o valor original primeiro
+
+    // Validações básicas de nível
+    if (categoria.nivel < 1 || categoria.nivel > 3) {
+      throw new Error("Nível deve ser 1, 2 ou 3");
+    }
+    // console.log(
+    // "categoria alan: ",
+    // util.inspect(
+    // { ...categoria, categoriaPai: categoria.categoriaPai },
+    // { depth: null, colors: true }
+    // )
+    // );
+    // console.log("categoria :>> ", categoria);
+    // console.log("categoria.categoriaPai :>> ", categoria.categoriaPai);
+    if (categoria.nivel > 1 && !categoria.categoriaPai) {
+      throw new Error("Categoria pai é obrigatória para níveis 2 e 3");
+    }
+    if (categoria.nivel === 1 && categoria.categoriaPai) {
+      throw new Error("Categoria pai deve ser nula para nível 1");
+    }
+
     if (!e.isNew) {
       categoriaOriginal = (await repo.findId(categoria.id)) || null;
       // BLOQUEAR alteração de nível (não é novo registro) - deve ser validado primeiro
@@ -16,80 +40,107 @@ import { remult } from "remult";
           `Não é permitido alterar o nível da categoria. Nível atual: ${categoriaOriginal.nivel}, Novo nível: ${categoria.nivel}`
         );
       }
-      let ids = categoria.caminhoIds.split(",").map((id) => id.trim());
-      if (ids.length !== categoria.nivel) {
+    }
+    if (categoria.nivel === 3) {
+      let categoriaNivel2 = await repo.findId(categoria.categoriaPai!.id);
+      if (!categoriaNivel2) {
+        throw new Error("Categoria pai de nível 2 não encontrada");
+      }
+      if (categoriaNivel2.nivel !== 2) {
+        console.log(categoriaNivel2.nome);
         throw new Error(
-          `Número de IDs no caminho (${ids.length}) não corresponde ao nível (${categoria.nivel})`
+          `Categoria pai de nível 3 deve ser de nível 2. Nível do pai: ${categoriaNivel2.nivel}`
         );
       }
-      if (categoria.nivel > 1 && ids[ids.length - 1] !== categoria.id) {
+
+      if (!categoriaNivel2.categoriaPai) {
+        throw new Error("Categoria pai de nível 2 não tem pai definido");
+      }
+
+      let categoriaNivel1 = await repo.findId(categoriaNivel2.categoriaPai.id);
+      if (!categoriaNivel1) {
+        throw new Error("Categoria pai de nível 1 não encontrada");
+      }
+      if (categoriaNivel1.nivel !== 1) {
         throw new Error(
-          "O último ID no caminho deve ser o ID da própria categoria"
+          `Categoria pai de nível 2 deve ser de nível 1. Nível do pai: ${categoriaNivel1.nivel}`
         );
       }
 
-      if (categoria.nivel === 1 && ids.length !== 1) {
-        throw new Error("Nível 1 deve ter exatamente um ID no caminho");
+      if (!e.isNew) {
+        categoria.caminho = `${categoriaNivel1.nome} => ${categoriaNivel2.nome} => ${categoria.nome}`;
+        categoria.caminhoIds = `${categoriaNivel1.id},${categoriaNivel2.id},${categoria.id}`;
       }
-      if (categoria.nivel === 2 && ids.length !== 2) {
-        throw new Error("Nível 2 deve ter exatamente dois IDs no caminho");
+    } else if (categoria.nivel === 2) {
+      let categoriaNivel1 = await repo.findId(categoria.categoriaPai!.id);
+      if (!categoriaNivel1) {
+        throw new Error("Categoria pai de nível 1 não encontrada");
       }
-      if (categoria.nivel === 3 && ids.length !== 3) {
-        throw new Error("Nível 3 deve ter exatamente três IDs no caminho");
+      if (categoriaNivel1.nivel !== 1) {
+        throw new Error(
+          `Categoria pai de nível 2 deve ser de nível 1. Nível do pai: ${categoriaNivel1.nivel}`
+        );
       }
-      for (const element of ids) {
-        if (!validarUUIDv4(element)) {
-          throw new Error(`ID inválido no caminho: ${element}`);
-        }
+      if (!e.isNew) {
+        categoria.caminho = `${categoriaNivel1.nome} => ${categoria.nome}`;
+        categoria.caminhoIds = `${categoriaNivel1.id},${categoria.id}`;
       }
-    }
-
-    // Validações básicas de nível
-    if (categoria.nivel < 1 || categoria.nivel > 3) {
-      throw new Error("Nível deve ser 1, 2 ou 3");
-    }
-    if (categoria.nivel > 1 && !categoria.categoriaPai) {
-      throw new Error("Categoria pai é obrigatória para níveis 2 e 3");
-    }
-    if (categoria.nivel === 1 && categoria.categoriaPai) {
-      throw new Error("Categoria pai deve ser nula para nível 1");
-    }
-
-    // PERMITIR alteração de categoria pai, mas com validações
-    if (
-      categoriaOriginal &&
-      categoriaOriginal.categoriaPai?.id !== categoria.categoriaPai?.id
-    ) {
-      // Validar que o novo pai existe (se foi informado)
-      if (categoria.categoriaPai) {
-        const repo = remult.repo(Categoria);
-        const novoPai = await repo.findId(categoria.categoriaPai.id);
-        if (!novoPai) {
-          throw new Error("Categoria pai não encontrada");
-        }
-
-        // Validar nível do novo pai
-        if (novoPai.nivel >= categoria.nivel) {
-          throw new Error(
-            `Categoria pai deve ter nível inferior ao da categoria atual. Pai: nível ${novoPai.nivel}, Categoria: nível ${categoria.nivel}`
-          );
-        }
-
-        // Evitar ciclos: verificar se a categoria atual não é ancestral do novo pai
-        let ancestral = novoPai.categoriaPai;
-        while (ancestral) {
-          if (ancestral.id === categoria.id) {
-            throw new Error(
-              "Não é possível criar um ciclo na hierarquia de categorias"
-            );
-          }
-          ancestral = ancestral.categoriaPai;
-        }
-      }
+    } else if (categoria.nivel === 1 && !e.isNew) {
+      categoria.caminho = categoria.nome;
+      categoria.caminhoIds = categoria.id;
     }
   },
   saved: async (categoria, e) => {
-    await atualizarCaminho(categoria.id);
+    // Apenas para novas entidades - atualizar caminho inicial
+    if (e.isNew) {
+      const repo = remult.repo(Categoria);
+      if (categoria.nivel === 3) {
+        let categoriaNivel2 = await repo.findId(categoria.categoriaPai!.id);
+        if (!categoriaNivel2) {
+          throw new Error("Categoria pai de nível 2 não encontrada");
+        }
+        if (categoriaNivel2.nivel !== 2) {
+          console.log(categoriaNivel2.nome);
+          throw new Error(
+            `Categoria pai de nível 3 deve ser de nível 2. Nível do pai: ${categoriaNivel2.nivel}`
+          );
+        }
+
+        if (!categoriaNivel2.categoriaPai) {
+          throw new Error("Categoria pai de nível 2 não tem pai definido");
+        }
+
+        let categoriaNivel1 = await repo.findId(
+          categoriaNivel2.categoriaPai.id
+        );
+        if (!categoriaNivel1) {
+          throw new Error("Categoria pai de nível 1 não encontrada");
+        }
+        if (categoriaNivel1.nivel !== 1) {
+          throw new Error(
+            `Categoria pai de nível 2 deve ser de nível 1. Nível do pai: ${categoriaNivel1.nivel}`
+          );
+        }
+
+        categoria.caminho = `${categoriaNivel1.nome} => ${categoriaNivel2.nome} => ${categoria.nome}`;
+        categoria.caminhoIds = `${categoriaNivel1.id},${categoriaNivel2.id},${categoria.id}`;
+      } else if (categoria.nivel === 2) {
+        let categoriaNivel1 = await repo.findId(categoria.categoriaPai!.id);
+        if (!categoriaNivel1) {
+          throw new Error("Categoria pai de nível 1 não encontrada");
+        }
+        if (categoriaNivel1.nivel !== 1) {
+          throw new Error(
+            `Categoria pai de nível 2 deve ser de nível 1. Nível do pai: ${categoriaNivel1.nivel}`
+          );
+        }
+        categoria.caminho = `${categoriaNivel1.nome} => ${categoria.nome}`;
+        categoria.caminhoIds = `${categoriaNivel1.id},${categoria.id}`;
+      } else if (categoria.nivel === 1) {
+        categoria.caminho = categoria.nome;
+        categoria.caminhoIds = categoria.id;
+      }
+    }
   },
 })
 export class Categoria {
