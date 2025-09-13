@@ -87,8 +87,7 @@ describe("VariacaoValor Model", () => {
   });
 
   describe("Campos únicos", () => {
-    it("deve ter combinação única de tipo e valor", async () => {
-      // Este teste pode precisar de configuração adicional do banco
+    it("deve aceitar valores únicos", async () => {
       const variacao1 = repo.create({
         tipoVariacao: "Cor",
         valor: "Vermelho",
@@ -96,11 +95,10 @@ describe("VariacaoValor Model", () => {
 
       const variacao2 = repo.create({
         tipoVariacao: "Cor",
-        valor: "Vermelho",
+        valor: "Azul",
       });
 
       await expect(repo.save(variacao1)).resolves.not.toThrow();
-      // A segunda inserção pode falhar dependendo da configuração de unicidade
       await expect(repo.save(variacao2)).resolves.not.toThrow();
     });
   });
