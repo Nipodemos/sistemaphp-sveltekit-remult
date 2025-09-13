@@ -15,7 +15,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "",
         nomeFantasia: "Teste",
-        documento: "12345678000123",
+        documento: "11222333000181",
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
@@ -36,7 +36,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "Empresa Teste",
         nomeFantasia: "",
-        documento: "12345678000123",
+        documento: "11222333000181",
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
@@ -78,7 +78,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "Empresa Teste",
         nomeFantasia: "Teste",
-        documento: "12345678000123",
+        documento: "11222333000181",
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
@@ -99,7 +99,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "Empresa Teste",
         nomeFantasia: "Teste",
-        documento: "12345678000123",
+        documento: "11222333000181",
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
@@ -161,7 +161,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "Empresa Teste",
         nomeFantasia: "Teste",
-        documento: "12345678000123", // CNPJ válido (todos iguais para teste)
+        documento: "11222333000181", // CNPJ válido (todos iguais para teste)
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
@@ -199,7 +199,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "Empresa Teste",
         nomeFantasia: "Teste",
-        documento: "12345678000123",
+        documento: "11222333000181",
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
@@ -218,7 +218,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "Empresa Teste",
         nomeFantasia: "Teste",
-        documento: "12345678000123",
+        documento: "11222333000181",
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
@@ -241,7 +241,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "Empresa Teste",
         nomeFantasia: "Teste",
-        documento: "12345678000123",
+        documento: "11222333000181",
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
@@ -261,7 +261,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "Empresa Teste",
         nomeFantasia: "Teste",
-        documento: "12345678000123",
+        documento: "11222333000181",
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
@@ -281,7 +281,7 @@ describe("Fornecedor Model", () => {
       const fornecedor = repo.create({
         razaoSocial: "Empresa Teste",
         nomeFantasia: "Teste",
-        documento: "12345678000123",
+        documento: "11222333000181",
         tipoDocumento: "CNPJ",
         rua: "Rua Teste",
         numero: "123",
