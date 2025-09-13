@@ -7,7 +7,9 @@ export class VariacaoValor {
   @Fields.id()
   id = "";
 
-  @Fields.literal(() => tipoVariacao)
+  @Fields.literal(() => tipoVariacao, {
+    dbName: "tipo_variacao",
+  })
   tipoVariacao!: TypeTipoVariacao; // Tipo fixo da variação
 
   @Fields.string({

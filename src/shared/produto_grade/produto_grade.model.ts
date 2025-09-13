@@ -83,12 +83,14 @@ export class ProdutoGrade {
   id = "";
 
   @Fields.string({
+    dbName: "produto_id",
     validate: Validators.required,
     caption: "ID do Produto",
   })
   produtoId = "";
 
   @Fields.string({
+    dbName: "variacao_valor1_id",
     validate: Validators.required,
     caption: "ID da Variação 1",
     allowApiUpdate: false,
@@ -96,12 +98,14 @@ export class ProdutoGrade {
   variacaoValor1Id = "";
 
   @Fields.string({
+    dbName: "variacao_valor2_id",
     caption: "ID da Variação 2 (opcional)",
     allowApiUpdate: false,
   })
   variacaoValor2Id = "";
 
   @Fields.string({
+    dbName: "variacao_valor3_id",
     caption: "ID da Variação 3 (opcional)",
     allowApiUpdate: false,
   })
@@ -113,16 +117,16 @@ export class ProdutoGrade {
   })
   ativo = true;
 
-  @Relations.toOne(() => Produto, { field: "produtoId" })
+  @Relations.toOne(() => Produto, { field: "produto_id" })
   produto!: Produto;
 
-  @Relations.toOne(() => VariacaoValor, { field: "variacaoValor1Id" })
+  @Relations.toOne(() => VariacaoValor, { field: "variacao_valor1_id" })
   variacaoValor1!: VariacaoValor;
 
-  @Relations.toOne(() => VariacaoValor, { field: "variacaoValor2Id" })
+  @Relations.toOne(() => VariacaoValor, { field: "variacao_valor2_id" })
   variacaoValor2?: VariacaoValor;
 
-  @Relations.toOne(() => VariacaoValor, { field: "variacaoValor3Id" })
+  @Relations.toOne(() => VariacaoValor, { field: "variacao_valor3_id" })
   variacaoValor3?: VariacaoValor;
 
   @Fields.createdAt()

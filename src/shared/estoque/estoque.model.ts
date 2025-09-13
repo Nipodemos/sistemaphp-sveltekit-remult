@@ -28,12 +28,12 @@ export class Estoque {
   })
   alteradoEm?: Date;
 
-  @Relations.toOne(() => Empresa)
+  @Relations.toOne(() => Empresa, { field: "empresa_id" })
   empresa!: Empresa;
 
-  @Relations.toOne(() => Produto)
+  @Relations.toOne(() => Produto, { field: "produto_id" })
   produto!: Produto;
 
-  @Relations.toOne(() => VariacaoValor)
+  @Relations.toOne(() => VariacaoValor, { field: "variacao_valor_id" })
   variacaoValor!: VariacaoValor;
 }

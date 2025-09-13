@@ -10,7 +10,7 @@ export class Categoria {
 
   // Referência para a categoria pai (null = categoria raiz)
   @Relations.toOne(() => Categoria, {
-    field: "categoriaPaiId",
+    field: "categoria_pai_id",
     allowNull: true,
   })
   categoriaPai?: Categoria;
@@ -24,7 +24,10 @@ export class Categoria {
   caminho: string = "";
 
   // Para facilitar consultas - IDs dos pais em ordem
-  @Fields.string({ allowNull: true })
+  @Fields.string({
+    dbName: "caminho_ids",
+    allowNull: true,
+  })
   caminhoIds?: string; // ex: "cat1_id,cat2_id,cat3_id"
 
   @Fields.boolean()

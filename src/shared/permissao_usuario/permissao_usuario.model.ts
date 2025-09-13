@@ -13,10 +13,12 @@ import { Usuario } from "$shared/usuario/usuario.model";
   },
 })
 export class PermissaoUsuario {
-  @Relations.toOne(() => Usuario, { field: "usuarioId" })
+  @Relations.toOne(() => Usuario, { field: "usuario_id" })
   usuario?: Usuario;
 
-  @Fields.string()
+  @Fields.string({
+    dbName: "usuario_id",
+  })
   usuarioId = "";
 
   // Usamos um validador para garantir que a tela existe na nossa Fonte da Verdade

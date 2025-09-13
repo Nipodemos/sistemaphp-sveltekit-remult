@@ -39,11 +39,13 @@ export class Produto {
   codigo!: string;
 
   @Fields.string({
+    dbName: "categoria_id",
     validate: Validators.required,
   })
   categoriaId = "";
 
   @Fields.string({
+    dbName: "fornecedor_id",
     validate: Validators.required,
   })
   fornecedorId = "";
@@ -54,6 +56,7 @@ export class Produto {
   descricao = "";
 
   @Fields.number({
+    dbName: "preco_custo",
     validate: [
       Validators.required,
       (entity: Produto) => {
@@ -66,6 +69,7 @@ export class Produto {
   precoCusto = 0;
 
   @Fields.number({
+    dbName: "preco_venda",
     validate: [
       Validators.required,
       (entity: Produto) => {
@@ -77,7 +81,9 @@ export class Produto {
   })
   precoVenda = 0;
 
-  @Fields.enum(() => ["UN", "KG", "LT", "M"] as const)
+  @Fields.enum(() => ["UN", "KG", "LT", "M"] as const, {
+    dbName: "unidade_medida",
+  })
   unidadeMedida: "UN" | "KG" | "LT" | "M" = "UN";
 
   @Fields.literal(() => tipoVariacao)
@@ -88,7 +94,7 @@ export class Produto {
   @Fields.literal(() => tipoVariacao)
   variacao3!: TypeTipoVariacao;
 
-  @Relations.toOne(() => Categoria, { field: "categoriaId" })
+  @Relations.toOne(() => Categoria, { field: "categoria_id" })
   categoria!: Categoria;
 
   @Fields.createdAt()
@@ -97,6 +103,6 @@ export class Produto {
   @Fields.updatedAt()
   alteradoEm?: Date;
 
-  @Relations.toOne(() => Fornecedor, { field: "fornecedorId" })
+  @Relations.toOne(() => Fornecedor, { field: "fornecedor_id" })
   fornecedor!: Fornecedor;
 }

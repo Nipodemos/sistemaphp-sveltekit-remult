@@ -80,6 +80,7 @@ export class Empresa {
   email = "";
 
   @Fields.boolean({
+    dbName: "eh_deposito",
     defaultValue: () => false,
     caption: "É Depósito",
   })

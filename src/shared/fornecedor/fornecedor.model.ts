@@ -25,6 +25,7 @@ export class Fornecedor {
   codigo!: string;
 
   @Fields.string<Fornecedor>({
+    dbName: "razao_social",
     validate: (fornecedor) => {
       if (!fornecedor.razaoSocial?.trim())
         throw new Error("Razão social é obrigatória");
@@ -33,6 +34,7 @@ export class Fornecedor {
   razaoSocial = "";
 
   @Fields.string<Fornecedor>({
+    dbName: "nome_fantasia",
     validate: (fornecedor) => {
       if (!fornecedor.nomeFantasia?.trim())
         throw new Error("Nome fantasia é obrigatório");
@@ -40,7 +42,9 @@ export class Fornecedor {
   })
   nomeFantasia = "";
 
-  @Fields.string()
+  @Fields.string({
+    dbName: "tipo_documento",
+  })
   tipoDocumento: TipoDocumento = "CNPJ";
 
   @Fields.string<Fornecedor>({
@@ -98,6 +102,7 @@ export class Fornecedor {
 
   // Contato
   @Fields.string<Fornecedor>({
+    dbName: "telefone_principal",
     validate: [
       Validators.required,
       (fornecedor) => {
@@ -112,6 +117,7 @@ export class Fornecedor {
   telefonePrincipal = "";
 
   @Fields.string<Fornecedor>({
+    dbName: "telefone_secundario",
     validate: (fornecedor) => {
       if (
         fornecedor.telefoneSecundario &&
@@ -136,11 +142,13 @@ export class Fornecedor {
 
   // Representante
   @Fields.string({
+    dbName: "representante_nome",
     validate: Validators.required,
   })
   representanteNome = "";
 
   @Fields.string<Fornecedor>({
+    dbName: "representante_telefone",
     validate: (fornecedor) => {
       if (
         fornecedor.representanteTelefone &&
@@ -155,6 +163,7 @@ export class Fornecedor {
   representanteTelefone = "";
 
   @Fields.string<Fornecedor>({
+    dbName: "representante_email",
     validate: (fornecedor) => {
       if (
         fornecedor.representanteEmail &&

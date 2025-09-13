@@ -17,6 +17,10 @@ import type { ClassType } from "remult";
 import { Categoria } from "./categoria/categoria.model";
 import { Produto } from "./produto/produto.model";
 import { Fornecedor } from "./fornecedor/fornecedor.model";
+import { Empresa } from "./empresa/empresa.model";
+import { Estoque } from "./estoque/estoque.model";
+import { ProdutoGrade } from "./produto_grade/produto_grade.model";
+import { VariacaoValor } from "./variacao_valor/variacao_valor.model";
 
 // 📝 Array centralizado de todas as entidades do sistema
 // Adicione novas entidades aqui e elas serão automaticamente registradas
@@ -27,6 +31,10 @@ export const entities: ClassType<any>[] = [
   Categoria,
   Produto,
   Fornecedor,
+  Empresa,
+  Estoque,
+  ProdutoGrade,
+  VariacaoValor,
 ];
 
 // Função helper para obter a lista de entidades (opcional, para melhor tipagem)

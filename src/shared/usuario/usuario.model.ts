@@ -24,7 +24,7 @@ export class Usuario {
   })
   cargos: string[] = [];
 
-  @Relations.toMany(() => PermissaoUsuario, { field: "usuarioId" })
+  @Relations.toMany(() => PermissaoUsuario)
   permissoes?: PermissaoUsuario[]; // Carrega todas as permissões para este usuário
 
   @Fields.createdAt()
