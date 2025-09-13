@@ -5,4 +5,8 @@ import { kitRoutes } from "vite-plugin-kit-routes";
 
 export default defineConfig({
   plugins: [sveltekit(), kitRoutes<KIT_ROUTES>()],
+  test: {
+    include: ["src/**/*.{test,spec}.{js,ts}"],
+    environment: "jsdom",
+  },
 });
