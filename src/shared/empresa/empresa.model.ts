@@ -1,5 +1,10 @@
 import { Entity, Fields, Validators, remult } from "remult";
-import { validarCNPJ, validarTelefone } from "$lib/utils/utils";
+import {
+  validarCNPJ,
+  validarTelefone,
+  formatarCNPJ,
+  validarEstado,
+} from "$lib/utils/utils";
 
 @Entity("empresas", {
   saving: async (empresa: Empresa, e) => {
@@ -21,6 +26,15 @@ import { validarCNPJ, validarTelefone } from "$lib/utils/utils";
         throw new Error("CNPJ já cadastrado");
       }
     }
+
+    // Aplicar máscara ao CNPJ se não estiver formatado
+    if (
+      empresa.cnpj &&
+      !empresa.cnpj.includes(".") &&
+      !empresa.cnpj.includes("/")
+    ) {
+      empresa.cnpj = formatarCNPJ(empresa.cnpj);
+    }
   },
 })
 export class Empresa {
@@ -28,6 +42,7 @@ export class Empresa {
   id = "";
 
   @Fields.string({
+    validate: [Validators.required, Validators.unique],
     valueConverter: {
       toDb: (value: string) => value.replace("EMPR", ""), // Salva apenas o número como string no banco
       fromDb: (value: string) => `EMPR${value}`, // Adiciona prefixo ao carregar
@@ -36,14 +51,15 @@ export class Empresa {
   codigo!: string;
 
   @Fields.string({
-    validate: Validators.required,
+    validate: [Validators.required, Validators.unique],
     caption: "Nome da Empresa",
   })
   nome = "";
 
   @Fields.string({
     validate: [
-      Validators.required,
+      Validators.required(),
+      Validators.unique(),
       (entity: Empresa) => {
         if (!validarCNPJ(entity.cnpj)) {
           throw new Error("CNPJ inválido");
@@ -55,26 +71,82 @@ export class Empresa {
   cnpj = "";
 
   @Fields.string({
-    caption: "Endereço",
+    validate: [Validators.required],
+    caption: "Rua",
   })
-  endereco = "";
+  rua = "";
 
   @Fields.string({
-    validate: (entity: Empresa) => {
-      if (entity.telefone && !validarTelefone(entity.telefone)) {
-        throw new Error("Telefone inválido");
-      }
-    },
+    validate: [Validators.required],
+    caption: "Número",
+  })
+  numero = "";
+
+  @Fields.string({
+    caption: "Complemento",
+  })
+  complemento = "";
+
+  @Fields.string({
+    validate: [Validators.required],
+    caption: "Bairro",
+  })
+  bairro = "";
+
+  @Fields.string({
+    validate: [Validators.required],
+    caption: "Cidade",
+  })
+  cidade = "";
+
+  @Fields.string({
+    validate: [
+      Validators.required,
+      (entity: Empresa) => {
+        if (!validarEstado(entity.estado)) {
+          throw new Error(
+            "Estado inválido. Use a sigla de um estado brasileiro válido (ex: SP, RJ, MG)"
+          );
+        }
+      },
+    ],
+    caption: "Estado (UF)",
+  })
+  estado = "";
+
+  @Fields.string({
+    validate: [Validators.required],
+    caption: "CEP",
+  })
+  cep = "";
+
+  @Fields.string({
+    caption: "Código do Município",
+  })
+  codigoMunicipio = "";
+
+  @Fields.string({
+    validate: [
+      Validators.required,
+      (entity: Empresa) => {
+        if (!validarTelefone(entity.telefone)) {
+          throw new Error("Telefone inválido");
+        }
+      },
+    ],
     caption: "Telefone",
   })
   telefone = "";
 
   @Fields.string({
-    validate: (entity: Empresa) => {
-      if (entity.email && !entity.email.includes("@")) {
-        throw new Error("Email inválido");
-      }
-    },
+    validate: [
+      Validators.required,
+      (entity: Empresa) => {
+        if (!entity.email.includes("@")) {
+          throw new Error("Email inválido");
+        }
+      },
+    ],
     caption: "Email",
   })
   email = "";

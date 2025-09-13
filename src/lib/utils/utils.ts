@@ -174,6 +174,19 @@ export function validarCNPJ(cnpj: string): boolean {
   );
 }
 
+export function formatarCNPJ(cnpj: string): string {
+  const limpo = cnpj.replace(/\D/g, "");
+
+  if (limpo.length !== 14) {
+    return cnpj; // Retorna como está se não tiver 14 dígitos
+  }
+
+  return `${limpo.slice(0, 2)}.${limpo.slice(2, 5)}.${limpo.slice(
+    5,
+    8
+  )}/${limpo.slice(8, 12)}-${limpo.slice(12, 14)}`;
+}
+
 export function validarTelefone(telefone: string): boolean {
   if (!telefone) return false;
   const limpo = telefone.replace(/\D/g, "");
