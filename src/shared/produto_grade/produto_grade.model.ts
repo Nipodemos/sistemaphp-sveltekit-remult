@@ -117,16 +117,16 @@ export class ProdutoGrade {
   })
   ativo = true;
 
-  @Relations.toOne(() => Produto, { field: "produto_id" })
+  @Relations.toOne(() => Produto)
   produto!: Produto;
 
-  @Relations.toOne(() => VariacaoValor, { field: "variacao_valor1_id" })
+  @Relations.toOne(() => VariacaoValor)
   variacaoValor1!: VariacaoValor;
 
-  @Relations.toOne(() => VariacaoValor, { field: "variacao_valor2_id" })
+  @Relations.toOne(() => VariacaoValor)
   variacaoValor2?: VariacaoValor;
 
-  @Relations.toOne(() => VariacaoValor, { field: "variacao_valor3_id" })
+  @Relations.toOne(() => VariacaoValor)
   variacaoValor3?: VariacaoValor;
 
   @Fields.createdAt()

@@ -19,6 +19,7 @@ import { Produto } from "./produto/produto.model";
 import { Fornecedor } from "./fornecedor/fornecedor.model";
 import { Empresa } from "./empresa/empresa.model";
 import { Estoque } from "./estoque/estoque.model";
+import { Teste } from "./teste/teste.model";
 import { ProdutoGrade } from "./produto_grade/produto_grade.model";
 import { VariacaoValor } from "./variacao_valor/variacao_valor.model";
 
@@ -35,6 +36,7 @@ export const entities: ClassType<any>[] = [
   Estoque,
   ProdutoGrade,
   VariacaoValor,
+  Teste,
 ];
 
 // Função helper para obter a lista de entidades (opcional, para melhor tipagem)

@@ -1,7 +1,5 @@
-import { validarUUIDv4 } from "$lib/utils/utils";
 import { Entity, Fields, Relations, Allow } from "remult";
 import { remult } from "remult";
-const util = require("util");
 
 @Entity<Categoria>("categorias", {
   allowApiCrud: Allow.authenticated,
@@ -42,7 +40,9 @@ const util = require("util");
       }
     }
     if (categoria.nivel === 3) {
-      let categoriaNivel2 = await repo.findId(categoria.categoriaPai!.id);
+      let categoriaNivel2 = await repo.findId(categoria.categoriaPai!.id, {
+        include: { categoriaPai: true },
+      });
       if (!categoriaNivel2) {
         throw new Error("Categoria pai de nível 2 não encontrada");
       }
@@ -57,7 +57,9 @@ const util = require("util");
         throw new Error("Categoria pai de nível 2 não tem pai definido");
       }
 
-      let categoriaNivel1 = await repo.findId(categoriaNivel2.categoriaPai.id);
+      let categoriaNivel1 = await repo.findId(categoriaNivel2.categoriaPai.id, {
+        include: { categoriaPai: true },
+      });
       if (!categoriaNivel1) {
         throw new Error("Categoria pai de nível 1 não encontrada");
       }
@@ -95,7 +97,9 @@ const util = require("util");
     if (e.isNew) {
       const repo = remult.repo(Categoria);
       if (categoria.nivel === 3) {
-        let categoriaNivel2 = await repo.findId(categoria.categoriaPai!.id);
+        let categoriaNivel2 = await repo.findId(categoria.categoriaPai!.id, {
+          include: { categoriaPai: true },
+        });
         if (!categoriaNivel2) {
           throw new Error("Categoria pai de nível 2 não encontrada");
         }
@@ -152,16 +156,22 @@ export class Categoria {
 
   // Referência para a categoria pai (null = categoria raiz)
   @Relations.toOne(() => Categoria, {
-    field: "categoria_pai_id",
     allowNull: true,
   })
   categoriaPai?: Categoria;
 
   // Nível na hierarquia (1, 2 ou 3)
-  @Fields.integer()
+  @Fields.integer({
+    validate: (nivel: number) => {
+      if (nivel < 1 || nivel > 3) {
+        return "Nível deve ser 1, 2 ou 3";
+      }
+    },
+    required: true,
+  })
   nivel: number = 1;
 
-  // Path completo da hierarquia (ex: "Casa/Móveis/Cama")
+  // Path completo da hierarquia (ex: "Casa => Móveis => Cama")
   @Fields.string()
   caminho: string = "";
 
@@ -178,7 +188,7 @@ export class Categoria {
   criadoEm?: Date;
 
   @Fields.updatedAt()
-  alteradoEm?: Date;
+  atualizadoEm?: Date;
 
   // Subcategorias filhas
   @Relations.toMany(() => Categoria, "categoriaPai")

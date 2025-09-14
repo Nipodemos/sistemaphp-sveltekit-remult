@@ -30,25 +30,13 @@ export class Produto {
   @Fields.id()
   id = "";
 
-  @Fields.string({
+  @Fields.string<number>({
     valueConverter: {
-      toDb: (value: string) => value.replace("PROD", ""), // Salva apenas o número como string no banco
+      toDb: (value: string) => value.toString(),
       fromDb: (value: string) => `PROD${value}`, // Adiciona prefixo ao carregar
     },
   })
   codigo!: string;
-
-  @Fields.string({
-    dbName: "categoria_id",
-    validate: Validators.required,
-  })
-  categoriaId = "";
-
-  @Fields.string({
-    dbName: "fornecedor_id",
-    validate: Validators.required,
-  })
-  fornecedorId = "";
 
   @Fields.string({
     validate: Validators.required,
@@ -94,7 +82,7 @@ export class Produto {
   @Fields.literal(() => tipoVariacao)
   variacao3!: TypeTipoVariacao;
 
-  @Relations.toOne(() => Categoria, { field: "categoria_id" })
+  @Relations.toOne(() => Categoria)
   categoria!: Categoria;
 
   @Fields.createdAt()
@@ -103,6 +91,6 @@ export class Produto {
   @Fields.updatedAt()
   alteradoEm?: Date;
 
-  @Relations.toOne(() => Fornecedor, { field: "fornecedor_id" })
+  @Relations.toOne(() => Fornecedor)
   fornecedor!: Fornecedor;
 }

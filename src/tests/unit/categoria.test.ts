@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { remult } from "remult";
+import { remult, type Repository } from "remult";
 import { Categoria } from "$shared/categoria/categoria.model";
 
 describe("Categoria Model", () => {
-  let repo: any;
+  let repo: Repository<Categoria>;
 
   beforeAll(() => {
     repo = remult.repo(Categoria);
@@ -14,421 +14,506 @@ describe("Categoria Model", () => {
       const categoria = repo.create({
         nome: "",
         nivel: 1,
-        caminho: "Teste",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440000",
-        ativo: true,
       });
 
-      await expect(repo.save(categoria)).rejects.toThrow();
+      await expect(repo.save(categoria)).rejects.toThrow("Nome");
     });
 
-    it("deve aceitar categoria válida", async () => {
+    it("deve rejeitar nome com menos de 2 caracteres", async () => {
+      const categoria = repo.create({
+        nome: "A",
+        nivel: 1,
+      });
+
+      await expect(repo.save(categoria)).rejects.toThrow("Nome");
+    });
+
+    it("deve aceitar nome válido", async () => {
       const categoria = repo.create({
         nome: "Categoria Teste",
         nivel: 1,
-        caminho: "Categoria Teste",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440000",
-        ativo: true,
       });
 
       await expect(repo.save(categoria)).resolves.not.toThrow();
     });
   });
 
-  describe("Campos opcionais", () => {
-    it("deve aceitar categoria pai vazio", async () => {
+  describe("Validações de nível", () => {
+    it("deve rejeitar nível menor que 1", async () => {
       const categoria = repo.create({
         nome: "Categoria Teste",
-        nivel: 1,
-        caminho: "Categoria Teste",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440001",
-        ativo: true,
-        categoriaPai: undefined,
-      });
-
-      await expect(repo.save(categoria)).resolves.not.toThrow();
-    });
-
-    it("deve aceitar caminhoIds válido", async () => {
-      const categoria = repo.create({
-        nome: "Categoria Teste",
-        nivel: 1,
-        caminho: "Categoria Teste",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440002",
-        ativo: true,
-      });
-
-      await expect(repo.save(categoria)).resolves.not.toThrow();
-    });
-  });
-
-  describe("Validações de formato", () => {
-    it("deve aceitar nível válido", async () => {
-      const categoria = repo.create({
-        nome: "Categoria Teste",
-        nivel: 2,
-        caminho: "Categoria Teste",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440003",
-        ativo: true,
+        nivel: 0,
       });
 
       await expect(repo.save(categoria)).rejects.toThrow(
-        "Categoria pai é obrigatória"
+        "Nível deve ser 1, 2 ou 3"
       );
     });
-  });
 
-  describe("Alteração de nível", () => {
-    it("deve bloquear alteração de nível", async () => {
-      // Criar categoria nível 1
+    it("deve rejeitar nível maior que 3", async () => {
       const categoria = repo.create({
-        nome: "Categoria Nivel 1",
-        nivel: 1,
-        caminho: "Categoria Nivel 1",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440004",
-        ativo: true,
+        nome: "Categoria Teste",
+        nivel: 4,
       });
-
-      await repo.save(categoria);
-
-      // Tentar alterar nível para 2
-      categoria.nivel = 2;
 
       await expect(repo.save(categoria)).rejects.toThrow(
-        "Não é permitido alterar o nível da categoria"
+        "Nível deve ser 1, 2 ou 3"
       );
     });
-  });
 
-  describe("Alteração de categoria pai", () => {
-    it("deve permitir alteração de categoria pai", async () => {
-      // Criar categoria pai nível 1
-      const categoriaPai1 = repo.create({
-        nome: "Categoria Pai 1",
+    it("deve aceitar nível 1", async () => {
+      const categoria = repo.create({
+        nome: "Categoria Nível 1",
         nivel: 1,
-        caminho: "Categoria Pai 1",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440005",
-        ativo: true,
       });
 
-      await repo.save(categoriaPai1);
+      await expect(repo.save(categoria)).resolves.not.toThrow();
+    });
 
-      // Criar categoria pai nível 2
-      const categoriaPai2 = repo.create({
-        nome: "Categoria Pai 2",
+    it("deve aceitar nível 2", async () => {
+      // Criar categoria pai nível 1 primeiro
+      const categoriaPai = await repo.save(
+        repo.create({
+          nome: "Categoria Pai",
+          nivel: 1,
+        })
+      );
+
+      const categoria = repo.create({
+        nome: "Categoria Nível 2",
         nivel: 2,
-        caminho: "Categoria Pai 1 / Categoria Pai 2",
-        caminhoIds:
-          "550e8400-e29b-41d4-a716-446655440005,550e8400-e29b-41d4-a716-446655440006",
-        ativo: true,
-        categoriaPai: categoriaPai1,
+        categoriaPai: categoriaPai,
       });
 
-      await repo.save(categoriaPai2);
+      await expect(repo.save(categoria)).resolves.not.toThrow();
+    });
 
-      // Criar categoria filha nível 3
-      const categoriaFilha = repo.create({
-        nome: "Categoria Filha",
+    it("deve aceitar nível 3", async () => {
+      // Criar hierarquia completa: nível 1 -> nível 2 -> nível 3
+      const categoriaNivel1 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 1",
+          nivel: 1,
+        })
+      );
+
+      const categoriaNivel2 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 2",
+          nivel: 2,
+          categoriaPai: categoriaNivel1,
+        })
+      );
+
+      const categoria = repo.create({
+        nome: "Categoria Nível 3",
         nivel: 3,
-        caminho: "Categoria Pai 1 / Categoria Pai 2 / Categoria Filha",
-        caminhoIds:
-          "550e8400-e29b-41d4-a716-446655440005,550e8400-e29b-41d4-a716-446655440006,550e8400-e29b-41d4-a716-446655440007",
-        ativo: true,
-        categoriaPai: categoriaPai2,
-      });
-
-      await repo.save(categoriaFilha);
-
-      // Alterar pai da categoria filha
-      categoriaFilha.categoriaPai = categoriaPai1;
-
-      await expect(repo.save(categoriaFilha)).resolves.not.toThrow();
-    });
-
-    it("deve rejeitar categoria pai inexistente", async () => {
-      // Criar categoria
-      const categoria = repo.create({
-        nome: "Categoria Teste Pai Inexistente",
-        nivel: 2,
-        caminho: "Categoria Teste Pai Inexistente",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440008",
-        ativo: true,
-        categoriaPai: { id: "id-inexistente" },
-      });
-
-      await expect(repo.save(categoria)).rejects.toThrow(
-        "Categoria pai não encontrada"
-      );
-    });
-
-    it("deve rejeitar categoria pai com nível igual ou superior", async () => {
-      // Criar categoria nível 2
-      const categoriaPai = repo.create({
-        nome: "Categoria Pai Nivel 2",
-        nivel: 2,
-        caminho: "Categoria Pai Nivel 2",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440009",
-        ativo: true,
-      });
-
-      await repo.save(categoriaPai);
-
-      // Criar categoria nível 2 tentando usar pai nível 2
-      const categoria = repo.create({
-        nome: "Categoria Nivel 2 Com Pai Nivel 2",
-        nivel: 2,
-        caminho: "Categoria Nivel 2 Com Pai Nivel 2",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440010",
-        ativo: true,
-        categoriaPai: categoriaPai,
-      });
-
-      await expect(repo.save(categoria)).rejects.toThrow(
-        "Categoria pai deve ter nível inferior"
-      );
-    });
-
-    it("deve rejeitar criação de ciclos na hierarquia", async () => {
-      // Criar categoria A nível 1
-      const categoriaA = repo.create({
-        nome: "Categoria A",
-        nivel: 1,
-        caminho: "Categoria A",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440011",
-        ativo: true,
-      });
-
-      await repo.save(categoriaA);
-
-      // Criar categoria B nível 2 filha de A
-      const categoriaB = repo.create({
-        nome: "Categoria B",
-        nivel: 2,
-        caminho: "Categoria A / Categoria B",
-        caminhoIds:
-          "550e8400-e29b-41d4-a716-446655440011,550e8400-e29b-41d4-a716-446655440012",
-        ativo: true,
-        categoriaPai: categoriaA,
-      });
-
-      await repo.save(categoriaB);
-
-      // Tentar fazer A ser filha de B (criaria ciclo)
-      categoriaA.categoriaPai = categoriaB;
-
-      await expect(repo.save(categoriaA)).rejects.toThrow(
-        "Não é possível criar um ciclo na hierarquia"
-      );
-    });
-  });
-
-  describe("Validações de campos obrigatórios", () => {
-    it("deve rejeitar nome vazio", async () => {
-      const categoria = repo.create({
-        nome: "",
-        nivel: 1,
-        caminho: "Teste",
-        ativo: true,
-      });
-
-      await expect(repo.save(categoria)).rejects.toThrow();
-    });
-
-    it("deve aceitar categoria válida", async () => {
-      const categoria = repo.create({
-        nome: "Categoria Teste",
-        nivel: 1,
-        caminho: "Categoria Teste",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440000",
-        ativo: true,
+        categoriaPai: categoriaNivel2,
       });
 
       await expect(repo.save(categoria)).resolves.not.toThrow();
     });
   });
 
-  describe("Campos opcionais", () => {
-    it("deve aceitar categoria pai vazio", async () => {
-      const categoria = repo.create({
-        nome: "Categoria Teste",
-        nivel: 1,
-        caminho: "Categoria Teste",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440001",
-        ativo: true,
-        categoriaPai: undefined,
-      });
-
-      await expect(repo.save(categoria)).resolves.not.toThrow();
-    });
-
-    it("deve aceitar caminhoIds vazio", async () => {
-      const categoria = repo.create({
-        nome: "Categoria Teste",
-        nivel: 1,
-        caminho: "Categoria Teste",
-        ativo: true,
-        caminhoIds: undefined,
-      });
-
-      await expect(repo.save(categoria)).resolves.not.toThrow();
-    });
-  });
-
-  describe("Validações de formato", () => {
-    it("deve aceitar nível válido", async () => {
-      // Criar categoria pai primeiro
-      const categoriaPai = repo.create({
-        nome: "Categoria Pai",
-        nivel: 1,
-        caminho: "Categoria Pai",
-        ativo: true,
-      });
-
-      await repo.save(categoriaPai);
-
-      // Agora criar categoria nível 2 com pai válido
-      const categoria = repo.create({
-        nome: "Categoria Teste",
-        nivel: 2,
-        caminho: "Categoria Pai / Categoria Teste",
-        ativo: true,
-        categoriaPai: categoriaPai,
-      });
-
-      await expect(repo.save(categoria)).resolves.not.toThrow();
-    });
-  });
-
-  describe("Alteração de nível", () => {
-    it("deve bloquear alteração de nível", async () => {
-      // Criar categoria nível 1
-      const categoria = repo.create({
-        nome: "Categoria Nivel 1",
-        nivel: 1,
-        caminho: "Categoria Nivel 1",
-        caminhoIds: "550e8400-e29b-41d4-a716-446655440013",
-        ativo: true,
-      });
-
-      await repo.save(categoria);
-
-      // Tentar alterar nível para 2 sem fornecer categoria pai
-      categoria.nivel = 2;
-      // Não definir categoriaPai para forçar o erro correto
-
-      await expect(repo.save(categoria)).rejects.toThrow(
-        "Não é permitido alterar o nível da categoria"
+  describe("Validações de hierarquia - Categoria Pai", () => {
+    it("deve rejeitar categoria nível 1 com pai definido", async () => {
+      // Primeiro criar uma categoria pai
+      const categoriaPai = await repo.save(
+        repo.create({
+          nome: "Categoria Pai",
+          nivel: 1,
+        })
       );
-    });
-  });
 
-  describe("Alteração de categoria pai", () => {
-    it("deve permitir alteração de categoria pai", async () => {
-      // Criar categoria pai nível 1
-      const categoriaPai1 = repo.create({
-        nome: "Categoria Pai 1",
-        nivel: 1,
-        caminho: "Categoria Pai 1",
-        ativo: true,
-      });
-
-      await repo.save(categoriaPai1);
-
-      // Criar categoria pai nível 2
-      const categoriaPai2 = repo.create({
-        nome: "Categoria Pai 2",
-        nivel: 2,
-        caminho: "Categoria Pai 1 / Categoria Pai 2",
-        ativo: true,
-        categoriaPai: categoriaPai1,
-      });
-
-      await repo.save(categoriaPai2);
-
-      // Criar categoria filha nível 3
-      const categoriaFilha = repo.create({
+      const categoria = repo.create({
         nome: "Categoria Filha",
-        nivel: 3,
-        caminho: "Categoria Pai 1 / Categoria Pai 2 / Categoria Filha",
-        ativo: true,
-        categoriaPai: categoriaPai2,
-      });
-
-      await repo.save(categoriaFilha);
-
-      // Alterar pai da categoria filha
-      categoriaFilha.categoriaPai = categoriaPai1;
-
-      await expect(repo.save(categoriaFilha)).resolves.not.toThrow();
-    });
-
-    it("deve rejeitar categoria pai inexistente", async () => {
-      // Criar categoria
-      const categoria = repo.create({
-        nome: "Categoria Teste Pai Inexistente",
-        nivel: 2,
-        caminho: "Categoria Teste Pai Inexistente",
-        ativo: true,
-        categoriaPai: { id: "id-inexistente" },
-      });
-
-      await expect(repo.save(categoria)).rejects.toThrow(
-        "Categoria pai não encontrada"
-      );
-    });
-
-    it("deve rejeitar categoria pai com nível igual ou superior", async () => {
-      // Criar categoria nível 2
-      const categoriaPai = repo.create({
-        nome: "Categoria Pai Nivel 2",
-        nivel: 2,
-        caminho: "Categoria Pai Nivel 2",
-        ativo: true,
-      });
-
-      await repo.save(categoriaPai);
-
-      // Criar categoria nível 2 tentando usar pai nível 2
-      const categoria = repo.create({
-        nome: "Categoria Nivel 2 Com Pai Nivel 2",
-        nivel: 2,
-        caminho: "Categoria Nivel 2 Com Pai Nivel 2",
-        ativo: true,
+        nivel: 1,
         categoriaPai: categoriaPai,
       });
 
       await expect(repo.save(categoria)).rejects.toThrow(
-        "Categoria pai deve ter nível inferior"
+        "Categoria pai deve ser nula para nível 1"
       );
     });
 
-    it("deve rejeitar criação de ciclos na hierarquia", async () => {
-      // Criar categoria A nível 1
-      const categoriaA = repo.create({
-        nome: "Categoria A",
+    it("deve aceitar categoria nível 1 sem pai", async () => {
+      const categoria = repo.create({
+        nome: "Categoria Raiz",
         nivel: 1,
-        caminho: "Categoria A",
-        ativo: true,
       });
 
-      await repo.save(categoriaA);
+      await expect(repo.save(categoria)).resolves.not.toThrow();
+    });
 
-      // Criar categoria B nível 2 filha de A
-      const categoriaB = repo.create({
-        nome: "Categoria B",
+    it("deve rejeitar categoria nível 2 sem pai", async () => {
+      const categoria = repo.create({
+        nome: "Categoria Nível 2",
         nivel: 2,
-        caminho: "Categoria A / Categoria B",
-        ativo: true,
-        categoriaPai: categoriaA,
       });
 
-      await repo.save(categoriaB);
+      await expect(repo.save(categoria)).rejects.toThrow(
+        "Categoria pai é obrigatória para níveis 2 e 3"
+      );
+    });
 
-      // Tentar fazer A ser filha de B (criaria ciclo)
-      categoriaA.categoriaPai = categoriaB;
+    it("deve rejeitar categoria nível 3 sem pai", async () => {
+      const categoria = repo.create({
+        nome: "Categoria Nível 3",
+        nivel: 3,
+      });
 
-      await expect(repo.save(categoriaA)).rejects.toThrow(
-        "Não é possível criar um ciclo na hierarquia"
+      await expect(repo.save(categoria)).rejects.toThrow(
+        "Categoria pai é obrigatória para níveis 2 e 3"
+      );
+    });
+  });
+
+  describe("Validações de níveis dos pais", () => {
+    it("deve aceitar categoria nível 2 com pai nível 1", async () => {
+      const categoriaPai = await repo.save(
+        repo.create({
+          nome: "Categoria Pai Nível 1",
+          nivel: 1,
+        })
+      );
+
+      const categoria = repo.create({
+        nome: "Categoria Filha Nível 2",
+        nivel: 2,
+        categoriaPai: categoriaPai,
+      });
+
+      await expect(repo.save(categoria)).resolves.not.toThrow();
+    });
+
+    it("deve aceitar categoria nível 3 com pai nível 2", async () => {
+      const categoriaNivel1 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 1",
+          nivel: 1,
+        })
+      );
+
+      const categoriaNivel2 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 2",
+          nivel: 2,
+          categoriaPai: categoriaNivel1,
+        })
+      );
+
+      const categoriaNivel3 = repo.create({
+        nome: "Categoria Nível 3",
+        nivel: 3,
+        categoriaPai: categoriaNivel2,
+      });
+
+      await expect(repo.save(categoriaNivel3)).resolves.not.toThrow();
+    });
+
+    it("deve rejeitar categoria nível 2 com pai nível 2", async () => {
+      const categoriaNivel1 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 1",
+          nivel: 1,
+        })
+      );
+
+      const categoriaNivel2 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 2",
+          nivel: 2,
+          categoriaPai: categoriaNivel1,
+        })
+      );
+
+      const categoriaInvalida = repo.create({
+        nome: "Categoria Inválida",
+        nivel: 2,
+        categoriaPai: categoriaNivel2, // Pai nível 2 para filho nível 2
+      });
+
+      await expect(repo.save(categoriaInvalida)).rejects.toThrow(
+        "Categoria pai de nível 2 deve ser de nível 1"
+      );
+    });
+
+    it("deve rejeitar categoria nível 3 com pai nível 1", async () => {
+      const categoriaNivel1 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 1",
+          nivel: 1,
+        })
+      );
+
+      const categoriaInvalida = repo.create({
+        nome: "Categoria Inválida",
+        nivel: 3,
+        categoriaPai: categoriaNivel1, // Pai nível 1 para filho nível 3
+      });
+
+      await expect(repo.save(categoriaInvalida)).rejects.toThrow(
+        "Categoria pai de nível 3 deve ser de nível 2"
+      );
+    });
+
+    it("deve rejeitar categoria nível 3 com pai nível 3", async () => {
+      const categoriaNivel1 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 1",
+          nivel: 1,
+        })
+      );
+
+      const categoriaNivel2 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 2",
+          nivel: 2,
+          categoriaPai: categoriaNivel1,
+        })
+      );
+
+      const categoriaNivel3 = await repo.save(
+        repo.create({
+          nome: "Categoria Nível 3",
+          nivel: 3,
+          categoriaPai: categoriaNivel2,
+        })
+      );
+
+      const categoriaInvalida = repo.create({
+        nome: "Categoria Inválida",
+        nivel: 3,
+        categoriaPai: categoriaNivel3, // Pai nível 3 para filho nível 3
+      });
+
+      await expect(repo.save(categoriaInvalida)).rejects.toThrow(
+        "Categoria pai de nível 3 deve ser de nível 2"
+      );
+    });
+  });
+
+  describe("Validações de alteração de nível", () => {
+    it("deve rejeitar alteração de nível de categoria existente", async () => {
+      const categoria = await repo.save(
+        repo.create({
+          nome: "Categoria Original",
+          nivel: 1,
+        })
+      );
+
+      categoria.nivel = 2; // Tentando alterar nível
+
+      await expect(repo.save(categoria)).rejects.toThrow(
+        "Categoria pai é obrigatória para níveis 2 e 3"
+      );
+    });
+
+    it("deve aceitar alteração de nome mantendo nível", async () => {
+      const categoria = await repo.save(
+        repo.create({
+          nome: "Categoria Original",
+          nivel: 1,
+        })
+      );
+
+      categoria.nome = "Categoria Alterada";
+
+      await expect(repo.save(categoria)).resolves.not.toThrow();
+    });
+  });
+
+  describe("Geração automática de caminhos", () => {
+    it("deve gerar caminho correto para categoria nível 1", async () => {
+      const categoria = await repo.save(
+        repo.create({
+          nome: "Eletrônicos",
+          nivel: 1,
+        })
+      );
+
+      expect(categoria.caminho).toBe("Eletrônicos");
+      expect(categoria.caminhoIds).toBe(categoria.id);
+    });
+
+    it("deve gerar caminho correto para categoria nível 2", async () => {
+      const categoriaNivel1 = await repo.save(
+        repo.create({
+          nome: "Eletrônicos",
+          nivel: 1,
+        })
+      );
+
+      const categoriaNivel2 = await repo.save(
+        repo.create({
+          nome: "Celulares",
+          nivel: 2,
+          categoriaPai: categoriaNivel1,
+        })
+      );
+
+      expect(categoriaNivel2.caminho).toBe("Eletrônicos => Celulares");
+      expect(categoriaNivel2.caminhoIds).toBe(
+        `${categoriaNivel1.id},${categoriaNivel2.id}`
+      );
+    });
+
+    it("deve gerar caminho correto para categoria nível 3", async () => {
+      const categoriaNivel1 = await repo.save(
+        repo.create({
+          nome: "Eletrônicos",
+          nivel: 1,
+        })
+      );
+
+      const categoriaNivel2 = await repo.save(
+        repo.create({
+          nome: "Celulares",
+          nivel: 2,
+          categoriaPai: categoriaNivel1,
+        })
+      );
+
+      const categoriaNivel3 = await repo.save(
+        repo.create({
+          nome: "Smartphones",
+          nivel: 3,
+          categoriaPai: categoriaNivel2,
+        })
+      );
+
+      expect(categoriaNivel3.caminho).toBe(
+        "Eletrônicos => Celulares => Smartphones"
+      );
+      expect(categoriaNivel3.caminhoIds).toBe(
+        `${categoriaNivel1.id},${categoriaNivel2.id},${categoriaNivel3.id}`
+      );
+    });
+  });
+
+  describe("Campos padrão", () => {
+    it("deve definir ativo como true por padrão", async () => {
+      const categoria = await repo.save(
+        repo.create({
+          nome: "Categoria Teste",
+          nivel: 1,
+        })
+      );
+
+      expect(categoria.ativo).toBe(true);
+    });
+
+    it("deve aceitar alteração do campo ativo", async () => {
+      const categoria = await repo.save(
+        repo.create({
+          nome: "Categoria Teste",
+          nivel: 1,
+          ativo: false,
+        })
+      );
+
+      expect(categoria.ativo).toBe(false);
+    });
+
+    it("deve definir timestamps automaticamente", async () => {
+      const categoria = await repo.save(
+        repo.create({
+          nome: "Categoria Teste",
+          nivel: 1,
+        })
+      );
+
+      expect(categoria.criadoEm).toBeInstanceOf(Date);
+      expect(categoria.atualizadoEm).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("Relações", () => {
+    it("deve permitir categoria sem subcategorias", async () => {
+      const categoria = await repo.save(
+        repo.create({
+          nome: "Categoria Raiz",
+          nivel: 1,
+        })
+      );
+
+      expect(categoria.subcategorias).toEqual([]);
+    });
+
+    it("deve carregar subcategorias corretamente", async () => {
+      const categoriaPai = await repo.save(
+        repo.create({
+          nome: "Eletrônicos",
+          nivel: 1,
+        })
+      );
+
+      const categoriaFilha1 = await repo.save(
+        repo.create({
+          nome: "Celulares",
+          nivel: 2,
+          categoriaPai: categoriaPai,
+        })
+      );
+
+      const categoriaFilha2 = await repo.save(
+        repo.create({
+          nome: "Computadores",
+          nivel: 2,
+          categoriaPai: categoriaPai,
+        })
+      );
+
+      // Verificar que as categorias filhas foram criadas com o pai correto
+      expect(categoriaFilha1.categoriaPai?.id).toBe(categoriaPai.id);
+      expect(categoriaFilha2.categoriaPai?.id).toBe(categoriaPai.id);
+    });
+  });
+
+  describe("Cenários complexos de hierarquia", () => {
+    it("deve criar hierarquia completa nível 1 -> 2 -> 3", async () => {
+      // Nível 1
+      const eletronicos = await repo.save(
+        repo.create({
+          nome: "Eletrônicos",
+          nivel: 1,
+        })
+      );
+
+      // Nível 2
+      const celulares = await repo.save(
+        repo.create({
+          nome: "Celulares",
+          nivel: 2,
+          categoriaPai: eletronicos,
+        })
+      );
+
+      // Nível 3
+      const smartphones = await repo.save(
+        repo.create({
+          nome: "Smartphones",
+          nivel: 3,
+          categoriaPai: celulares,
+        })
+      );
+
+      expect(eletronicos.caminho).toBe("Eletrônicos");
+      expect(celulares.caminho).toBe("Eletrônicos => Celulares");
+      expect(smartphones.caminho).toBe(
+        "Eletrônicos => Celulares => Smartphones"
+      );
+    });
+
+    it("deve rejeitar criação de categoria nível 3 sem avô nível 1", async () => {
+      // Tentar criar categoria nível 2 sem pai nível 1
+      const categoriaNivel2 = repo.create({
+        nome: "Categoria Nível 2",
+        nivel: 2,
+      });
+
+      await expect(repo.save(categoriaNivel2)).rejects.toThrow(
+        "Categoria pai é obrigatória para níveis 2 e 3"
       );
     });
   });
