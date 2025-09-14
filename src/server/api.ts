@@ -4,20 +4,26 @@ import { entities } from "../shared/entities";
 import bcrypt from "bcrypt";
 import { PermissionsController } from "$shared/permissao_usuario/permissao_usuario.controller";
 import { type PermissoesCompletas } from "$lib/types/permissoes";
-import type { UserInfo } from "remult";
+import { SqlDatabase, type UserInfo } from "remult";
+import Database from "better-sqlite3";
 import { criarObjetoPermissoes } from "$lib/utils/utils";
+import { BetterSqlite3DataProvider } from "remult/remult-better-sqlite3";
 
 export interface UsuarioLogado extends UserInfo {
   id: string;
   nome: string;
   cargos: string[];
   login: string;
-  permissions: PermissoesCompletas; // Nossa nova estrutura!
+  permissions: PermissoesCompletas;
 }
 
 export const api = remultApi({
   admin: true,
   entities: entities,
+  controllers: [PermissionsController],
+  dataProvider: new SqlDatabase(
+    new BetterSqlite3DataProvider(new Database("./mydb.sqlite"))
+  ),
   initApi: async (remult) => {
     const repoUsuario = remult.repo(Usuario);
 

@@ -5,11 +5,7 @@ import { Usuario } from "$shared/usuario/usuario.model";
 import { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
 import { fail } from "@sveltejs/kit";
 import bcrypt from "bcrypt";
-import {
-  permissoes,
-  type TelaPermissao,
-  type PermissoesCompletas,
-} from "$lib/types/permissoes";
+import { permissoes, type PermissoesCompletas } from "$lib/types/permissoes";
 import { criarObjetoPermissoes } from "$lib/utils/utils";
 
 export const load: PageServerLoad = async ({ url }) => {

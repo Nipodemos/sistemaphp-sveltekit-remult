@@ -5,27 +5,35 @@ export type TipoDocumento = "CPF" | "CNPJ";
 
 @Entity<Fornecedor>("fornecedores", {
   allowApiCrud: Allow.authenticated,
-  saving: async (fornecedor, e) => {
-    if (e.isNew) {
-      const novoCodigo = await Fornecedor.gerarCodigoInterno();
-      fornecedor.codigo = `FORN${novoCodigo}`; // Define com prefixo para o objeto
-    }
-  },
 })
 export class Fornecedor {
   @Fields.id()
   id = "";
 
-  @Fields.string({
+  @Fields.autoIncrement({
     valueConverter: {
-      toDb: (value: string) => value.replace("FORN", ""), // Salva apenas o número como string no banco
-      fromDb: (value: string) => `FORN${value}`, // Adiciona prefixo ao carregar do banco
+      fieldTypeInDb: "number",
+      displayValue: (value: number) =>
+        `FORN${value.toString().padStart(3, "0")}`,
     },
   })
-  codigo!: string;
+  private _codigo!: number;
+
+  get codigo(): string {
+    return `FORN${this._codigo}`;
+  }
+
+  set codigo(value: string | number) {
+    if (typeof value === "string" && value.startsWith("FORN")) {
+      this._codigo = parseInt(value.replace("FORN", ""));
+    } else if (typeof value === "number") {
+      this._codigo = value;
+    } else {
+      throw new Error("Código deve ser um número ou string no formato FORNXXX");
+    }
+  }
 
   @Fields.string<Fornecedor>({
-    dbName: "razao_social",
     validate: (fornecedor) => {
       if (!fornecedor.razaoSocial?.trim())
         throw new Error("Razão social é obrigatória");
@@ -34,7 +42,6 @@ export class Fornecedor {
   razaoSocial = "";
 
   @Fields.string<Fornecedor>({
-    dbName: "nome_fantasia",
     validate: (fornecedor) => {
       if (!fornecedor.nomeFantasia?.trim())
         throw new Error("Nome fantasia é obrigatório");
@@ -42,9 +49,7 @@ export class Fornecedor {
   })
   nomeFantasia = "";
 
-  @Fields.string({
-    dbName: "tipo_documento",
-  })
+  @Fields.string()
   tipoDocumento: TipoDocumento = "CNPJ";
 
   @Fields.string<Fornecedor>({
@@ -102,7 +107,6 @@ export class Fornecedor {
 
   // Contato
   @Fields.string<Fornecedor>({
-    dbName: "telefone_principal",
     validate: [
       Validators.required,
       (fornecedor) => {
@@ -117,7 +121,6 @@ export class Fornecedor {
   telefonePrincipal = "";
 
   @Fields.string<Fornecedor>({
-    dbName: "telefone_secundario",
     validate: (fornecedor) => {
       if (
         fornecedor.telefoneSecundario &&
@@ -142,13 +145,11 @@ export class Fornecedor {
 
   // Representante
   @Fields.string({
-    dbName: "representante_nome",
     validate: Validators.required,
   })
   representanteNome = "";
 
   @Fields.string<Fornecedor>({
-    dbName: "representante_telefone",
     validate: (fornecedor) => {
       if (
         fornecedor.representanteTelefone &&
@@ -163,7 +164,6 @@ export class Fornecedor {
   representanteTelefone = "";
 
   @Fields.string<Fornecedor>({
-    dbName: "representante_email",
     validate: (fornecedor) => {
       if (
         fornecedor.representanteEmail &&
@@ -178,19 +178,18 @@ export class Fornecedor {
   @Fields.createdAt()
   criadoEm?: Date;
 
-  @Fields.updatedAt()
-  alteradoEm?: Date;
-
   static async gerarCodigoInterno(): Promise<number> {
     const repo = remult.repo(Fornecedor);
     const maxCodigo = await repo.find({
-      orderBy: { codigo: "desc" }, // Ordena pela string, mas assume formato "FORNXXX"
+      orderBy: { codigo: "desc" },
       limit: 1,
     });
     if (maxCodigo.length === 0) {
       return 100;
     }
-    const ultimoNumero = parseInt(maxCodigo[0].codigo.replace("FORN", ""));
+    // Como codigo agora é uma string formatada, precisamos extrair o número
+    const ultimoCodigoStr = maxCodigo[0].codigo;
+    const ultimoNumero = parseInt(ultimoCodigoStr.replace("FORN", ""));
     return ultimoNumero + 1;
   }
 

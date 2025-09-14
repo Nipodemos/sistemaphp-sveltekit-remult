@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { remult } from "remult";
+  import { remult, repo } from "remult";
   import { Fornecedor } from "$shared/fornecedor/fornecedor.model";
 
   let fornecedores = $state<Fornecedor[]>([]);
@@ -149,7 +149,7 @@
         <tbody>
           {#each fornecedores as fornecedor}
             <tr>
-              <td>{fornecedor.codigo}</td>
+              <td>{repo(Fornecedor).fields.codigo.displayValue(fornecedor)}</td>
               <td>{fornecedor.razaoSocial}</td>
               <td>{fornecedor.nomeFantasia}</td>
               <td>{fornecedor.tipoDocumento}</td>
