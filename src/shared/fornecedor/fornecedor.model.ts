@@ -1,5 +1,6 @@
-import { Allow, Entity, Fields, remult, Validators } from "remult";
+import { Allow, Entity, Fields, Relations, remult, Validators } from "remult";
 import { validarCPF, validarCNPJ, validarTelefone } from "$lib/utils/utils";
+import { Produto } from "$shared/produto/produto.model";
 
 export type TipoDocumento = "CPF" | "CNPJ";
 
@@ -17,21 +18,7 @@ export class Fornecedor {
         `FORN${value.toString().padStart(3, "0")}`,
     },
   })
-  private _codigo!: number;
-
-  get codigo(): string {
-    return `FORN${this._codigo}`;
-  }
-
-  set codigo(value: string | number) {
-    if (typeof value === "string" && value.startsWith("FORN")) {
-      this._codigo = parseInt(value.replace("FORN", ""));
-    } else if (typeof value === "number") {
-      this._codigo = value;
-    } else {
-      throw new Error("Código deve ser um número ou string no formato FORNXXX");
-    }
-  }
+  private codigo!: number;
 
   @Fields.string<Fornecedor>({
     validate: (fornecedor) => {
@@ -175,23 +162,14 @@ export class Fornecedor {
   })
   representanteEmail = "";
 
+  @Relations.toMany(() => Produto)
+  produtos: Produto[] = [];
+
   @Fields.createdAt()
   criadoEm?: Date;
 
-  static async gerarCodigoInterno(): Promise<number> {
-    const repo = remult.repo(Fornecedor);
-    const maxCodigo = await repo.find({
-      orderBy: { codigo: "desc" },
-      limit: 1,
-    });
-    if (maxCodigo.length === 0) {
-      return 100;
-    }
-    // Como codigo agora é uma string formatada, precisamos extrair o número
-    const ultimoCodigoStr = maxCodigo[0].codigo;
-    const ultimoNumero = parseInt(ultimoCodigoStr.replace("FORN", ""));
-    return ultimoNumero + 1;
-  }
+  @Fields.updatedAt()
+  alteradoEm?: Date;
 
   private static validarEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
