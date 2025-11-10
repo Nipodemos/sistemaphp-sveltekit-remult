@@ -5,7 +5,6 @@
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
-  import { atualizarCaminho } from "$lib/utils/utils";
 
   // Estados reativos para cada nível
   let nivel1Id = $state<string | null>(null);
@@ -145,12 +144,6 @@
       erro = null;
       sucesso = null;
 
-      // Validações
-      if (!nivel1Id && !novoNivel1.trim()) {
-        erro = "Selecione ou crie uma categoria de nível 1";
-        return;
-      }
-
       // Se estiver em modo de edição, verificar se a categoria existe
       if (modoEdicao && categoriaIdEdicao) {
         const categoriaExistente =
@@ -170,16 +163,17 @@
           return;
         }
         nivel1 = nivel1Temp;
-      } else {
+      } else if (novoNivel1.trim()) {
         // Criar nova categoria de nível 1
         nivel1 = repoCategoria.create();
         nivel1.nome = novoNivel1.trim();
         nivel1.nivel = 1;
         nivel1 = await repoCategoria.save(nivel1);
-        // Atualizar caminho
-        await atualizarCaminho(nivel1.id);
         // Atualizar lista de categorias
         categoriasNivel1 = [...categoriasNivel1, nivel1];
+      } else {
+        erro = "Selecione ou crie uma categoria de nível 1";
+        return;
       }
 
       // Criar ou selecionar nível 2
@@ -198,8 +192,6 @@
         nivel2.nivel = 2;
         nivel2.categoriaPai = nivel1;
         nivel2 = await repoCategoria.save(nivel2);
-        // Atualizar caminho
-        await atualizarCaminho(nivel2.id);
         // Atualizar lista de categorias
         categoriasNivel2 = [...categoriasNivel2, nivel2];
       }
@@ -222,8 +214,6 @@
           nivel2.nivel = 2;
           nivel2.categoriaPai = nivel1;
           nivel2 = await repoCategoria.save(nivel2);
-          // Atualizar caminho
-          await atualizarCaminho(nivel2.id);
           // Atualizar lista de categorias
           categoriasNivel2 = [...categoriasNivel2, nivel2];
         }
@@ -234,8 +224,6 @@
         nivel3.nivel = 3;
         nivel3.categoriaPai = nivel2;
         nivel3 = await repoCategoria.save(nivel3);
-        // Atualizar caminho
-        await atualizarCaminho(nivel3.id);
       }
 
       // Se estiver em modo de edição, atualizar a categoria existente
@@ -260,7 +248,6 @@
         goto("/app/categorias");
       }, 1500);
     } catch (err) {
-      console.log("alan passou aqui 5");
       erro =
         "Erro ao salvar: " + (err instanceof Error ? err.message : String(err));
     } finally {
@@ -469,8 +456,7 @@
   }
 
   input,
-  select,
-  textarea {
+  select {
     width: 100%;
     padding: 8px;
     border: 1px solid #ccc;
