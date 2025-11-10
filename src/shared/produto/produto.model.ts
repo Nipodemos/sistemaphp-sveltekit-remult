@@ -6,9 +6,9 @@ import type { TypeTipoVariacao } from "$lib/types/variacao.types";
 
 @Entity("produtos", {
   saving: async (produto: Produto, e) => {
+    const repo = remult.repo(Produto);
     if (e.isNew) {
       // Gerar código sequencial único
-      const repo = remult.repo(Produto);
       const maxSequencial = await repo
         .find({
           orderBy: { codigo: "desc" },
@@ -17,10 +17,11 @@ import type { TypeTipoVariacao } from "$lib/types/variacao.types";
         .then((results) => (results[0] ? parseInt(results[0].codigo) : 0));
       const novoNumero = maxSequencial + 1;
       produto.codigo = novoNumero.toString();
-      produto.fornecedorId = produto.fornecedor.id;
     } else {
+      const produtoAntigo = await repo.findId(produto.id);
+
       // Checagem para não permitir alteração do fornecedor
-      if (produto.fornecedor.id !== produto.fornecedorId) {
+      if (produto.fornecedor.id !== produtoAntigo?.fornecedor.id) {
         throw new Error("Não é permitido alterar o fornecedor do produto");
       }
     }
@@ -31,15 +32,16 @@ export class Produto {
   id = "";
 
   @Fields.string<number>({
+    validate: [Validators.required, Validators.unique()],
     valueConverter: {
-      toDb: (value: string) => value.toString(),
+      toDb: (value: string) => value.replace(/^PROD/, ""), // Remove prefixo PROD se existir
       fromDb: (value: string) => `PROD${value}`, // Adiciona prefixo ao carregar
     },
   })
   codigo!: string;
 
   @Fields.string({
-    validate: Validators.required,
+    validate: [Validators.required],
   })
   descricao = "";
 
@@ -91,6 +93,8 @@ export class Produto {
   @Fields.updatedAt()
   alteradoEm?: Date;
 
-  @Relations.toOne(() => Fornecedor)
+  @Relations.toOne(() => Fornecedor, {
+    validate: [Validators.required, Validators.relationExists],
+  })
   fornecedor!: Fornecedor;
 }
