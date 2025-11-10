@@ -1,15 +1,17 @@
 <script lang="ts">
   import { remult, type EntityFilter, type FindOptions } from "remult";
   import { Produto } from "$shared/produto/produto.model";
-  import { processarPesquisaProduto } from "$lib/utils/utils";
+  import { Fornecedor } from "$shared/fornecedor/fornecedor.model";
 
   let produtos = $state<Produto[]>([]);
   let carregando = $state(true);
   let erro = $state<string | null>(null);
   let totalCount = $state(0);
   const repoProduto = remult.repo(Produto);
+  const repoFornecedor = remult.repo(Fornecedor);
 
   let searchTerm = $state("");
+  let searchType = $state<"produto" | "fornecedor">("produto");
   let currentPage = $state(1);
   let pageSize = $state(10);
 
@@ -20,39 +22,57 @@
       try {
         carregando = true;
         erro = null;
-        // let where: any = undefined;
+        let conditions: FindOptions<Produto> = {};
+
         if (searchTerm.trim()) {
-          const { codigoProduto, codigoFornecedor } =
-            processarPesquisaProduto(searchTerm);
-          await repoProduto.find({
-            where: {
-              $or: [
-                { descricao: { $contains: searchTerm } },
-                { codigo: { $contains: searchTerm } },
-              ],
-            },
-          });
-          const conditions: EntityFilter<Produto>[] = [];
-          if (codigoProduto !== null) {
-            conditions.push({ codigo: codigoProduto });
+          if (searchType === "produto") {
+            const conditions: FindOptions<Produto> = {};
+
+            if (
+              searchTerm.toUpperCase().startsWith("PROD") ||
+              /^\d+$/.test(searchTerm.trim())
+            ) {
+              conditions.where = { codigo: searchTerm };
+            } else {
+              conditions.where = { descricao: { $contains: searchTerm } };
+            }
+          } else if (searchType === "fornecedor") {
+            const conditions: FindOptions<Produto> = {};
+
+            if (
+              searchTerm.toUpperCase().startsWith("PROD") ||
+              /^\d+$/.test(searchTerm.trim())
+            ) {
+              let codigo = Number(searchTerm.replace("FORN", ""));
+              conditions.where = {
+                fornecedor: await repoFornecedor.findOne({
+                  where: { sequencial: codigo },
+                }),
+              };
+            } else {
+              conditions.where = {
+                fornecedor: await repoFornecedor.findOne({
+                  where: {
+                    $or: [
+                      { nomeFantasia: searchTerm },
+                      { razaoSocial: searchTerm },
+                    ],
+                  },
+                }),
+              };
+            }
           }
-          if (codigoFornecedor) {
-            conditions.push({ fornecedor: { codigo: codigoFornecedor } });
-          }
-          // Se for número, buscar por sequencial
-          if (!isNaN(Number(searchTerm))) {
-            conditions.push({ codigoSequencial: Number(searchTerm) });
-          }
-          where = { $or: conditions };
         }
+
         const result = await repoProduto.find({
+          ...conditions,
           limit: pageSize,
           page: currentPage,
-          where,
+
           include: { fornecedor: true, categoria: true },
         });
         produtos = result;
-        totalCount = await repoProduto.count(where);
+        totalCount = await repoProduto.count(conditions.where);
       } catch (err) {
         console.log("err :>> ", err);
         erro =
@@ -108,10 +128,16 @@
   </div>
 
   <div>
+    <select bind:value={searchType}>
+      <option value="produto">Produto (código/descrição)</option>
+      <option value="fornecedor">Fornecedor (código/descrição)</option>
+    </select>
     <input
       type="text"
       bind:value={searchTerm}
-      placeholder="Pesquisar por descrição ou código"
+      placeholder={searchType === "produto"
+        ? "Pesquisar por código ou descrição do produto"
+        : "Pesquisar por código ou descrição do fornecedor"}
     />
   </div>
 
