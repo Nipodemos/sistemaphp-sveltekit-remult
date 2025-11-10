@@ -6,19 +6,26 @@ export type TipoDocumento = "CPF" | "CNPJ";
 
 @Entity<Fornecedor>("fornecedores", {
   allowApiCrud: Allow.authenticated,
+  saving: async (fornecedor, e) => {
+    if (!e.isNew) {
+      const original = await remult.repo(Fornecedor).findId(fornecedor.id);
+      if (original && original.sequencial !== fornecedor.sequencial) {
+        throw new Error("Código não pode ser alterado após a criação");
+      }
+    }
+  },
 })
 export class Fornecedor {
   @Fields.id()
   id = "";
 
-  @Fields.autoIncrement({
-    valueConverter: {
-      fieldTypeInDb: "number",
-      displayValue: (value: number) =>
-        `FORN${value.toString().padStart(3, "0")}`,
-    },
+  @Fields.autoIncrement()
+  public sequencial!: number;
+
+  @Fields.string<Fornecedor>({
+    sqlExpression: () => `'FORN' || lpad(CAST(sequencial AS TEXT), 3, '0')`,
   })
-  private codigo!: number;
+  codigo!: string;
 
   @Fields.string<Fornecedor>({
     validate: (fornecedor) => {
