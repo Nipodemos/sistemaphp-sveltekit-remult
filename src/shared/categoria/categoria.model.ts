@@ -144,6 +144,7 @@ import { remult } from "remult";
         categoria.caminho = categoria.nome;
         categoria.caminhoIds = categoria.id;
       }
+      await repo.save(categoria);
     }
   },
 })
