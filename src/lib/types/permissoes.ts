@@ -1,102 +1,107 @@
+// Estrutura simplificada: apenas listas de regras por tela
 export const permissoes = {
-  vendas: {
-    visualizar: {
-      descricao: "Visualizar tela de vendas",
-      temPermissao: false,
-    },
-    criar: {
-      descricao: "Criar novos registros de vendas",
-      temPermissao: false,
-    },
-    editar: {
-      descricao: "Editar vendas existentes",
-      temPermissao: false,
-    },
-    deletar: {
-      descricao: "Excluir registros de vendas",
-      temPermissao: false,
-    },
-    relatorioGerencial: {
-      descricao: "Imprimir relatório gerencial",
-      temPermissao: false,
-    },
-    relatorioComissao: {
-      descricao: "Imprimir relatório de comissões",
-      temPermissao: false,
-    },
-  },
-  estoque: {
-    visualizar: {
-      descricao: "Visualizar tela de estoque",
-      temPermissao: false,
-    },
-    criar: {
-      descricao: "Criar novos produtos",
-      temPermissao: false,
-    },
-    editar: {
-      descricao: "Editar produtos existentes",
-      temPermissao: false,
-    },
-    deletar: {
-      descricao: "Excluir produtos",
-      temPermissao: false,
-    },
-    relatorios: {
-      descricao: "Gerar relatórios de movimentação",
-      temPermissao: false,
-    },
-  },
-  financeiro: {
-    visualizar: {
-      descricao: "Visualizar tela do financeiro",
-      temPermissao: false,
-    },
-    criar: {
-      descricao: "Lançar novas contas",
-      temPermissao: false,
-    },
-    editar: {
-      descricao: "Editar lançamentos",
-      temPermissao: false,
-    },
-    deletar: {
-      descricao: "Excluir lançamentos",
-      temPermissao: false,
-    },
-    baixarParcelas: {
-      descricao: "Realizar a baixa de parcelas",
-      temPermissao: false,
-    },
-    refaturarParcelas: {
-      descricao: "Refaturar parcelas vencidas",
-      temPermissao: false,
-    },
-  },
+  vendas: [
+    "visualizar",
+    "criar",
+    "editar",
+    "deletar",
+    "relatorioGerencial",
+    "relatorioComissao",
+  ],
+  estoque: ["visualizar", "criar", "editar", "deletar", "relatorios"],
+  financeiro: [
+    "visualizar",
+    "criar",
+    "editar",
+    "deletar",
+    "baixarParcelas",
+    "refaturarParcelas",
+  ],
 } as const;
 
-// Tipos muito mais simples
-export type TelaPermissao = keyof typeof permissoes;
-export type RegraPermissao<T extends TelaPermissao> =
-  keyof (typeof permissoes)[T];
-
-// Para quando você precisar enviar apenas as permissões ativas (banco de dados)
-export type PermissoesUsuarioInput = {
-  [Screen in TelaPermissao]?: RegraPermissao<Screen>[];
+// Descrições das telas
+export const descricoesTelas: Record<TelaPermissao, string> = {
+  vendas: "Gerenciamento de vendas e pedidos",
+  estoque: "Controle de produtos e inventário",
+  financeiro: "Contas a pagar/receber e lançamentos",
 };
 
-// Tipo final completo com todas as permissões (temPermissao: boolean)
-// Tipo final completo com todas as permissões (temPermissao: boolean)
-// Construído a partir do `permissoes` mas removendo `readonly`, para que
-// `temPermissao` possa ser mutável sempre que essa tipagem for usada.
-// Apenas `temPermissao` é mutável; as chaves e `descricao` permanecem readonly.
+// Descrições separadas para manter as informações
+export const descricoesPermissoes: {
+  [K in TelaPermissao]: { [P in RegraPermissao<K>]: string };
+} = {
+  vendas: {
+    visualizar: "Visualizar tela de vendas",
+    criar: "Criar novos registros de vendas",
+    editar: "Editar vendas existentes",
+    deletar: "Excluir registros de vendas",
+    relatorioGerencial: "Imprimir relatório gerencial",
+    relatorioComissao: "Imprimir relatório de comissões",
+  },
+  estoque: {
+    visualizar: "Visualizar tela de estoque",
+    criar: "Criar novos produtos",
+    editar: "Editar produtos existentes",
+    deletar: "Excluir produtos",
+    relatorios: "Gerar relatórios de movimentação",
+  },
+  financeiro: {
+    visualizar: "Visualizar tela do financeiro",
+    criar: "Lançar novas contas",
+    editar: "Editar lançamentos",
+    deletar: "Excluir lançamentos",
+    baixarParcelas: "Realizar a baixa de parcelas",
+    refaturarParcelas: "Refaturar parcelas vencidas",
+  },
+};
+
+// Tipos derivados automaticamente
+export type TelaPermissao = keyof typeof permissoes;
+export type RegraPermissao<T extends TelaPermissao> =
+  (typeof permissoes)[T][number];
+
+// Para permissões completas com temPermissao
 export type PermissoesCompletas = {
-  readonly [K in keyof typeof permissoes]: {
-    readonly [P in keyof (typeof permissoes)[K]]: {
+  readonly [K in TelaPermissao]: {
+    readonly [P in RegraPermissao<K>]: {
       readonly descricao: string;
-      temPermissao: boolean; // mutável
+      temPermissao: boolean;
     };
   };
 };
 
-// Função para criar objeto de permissões com base nas permissões ativas do usuário
+// Para input (apenas regras ativas)
+export type PermissoesUsuarioInput = {
+  [Screen in TelaPermissao]?: RegraPermissao<Screen>[];
+};
+
+// Função para iterar com tipagem forte
+function forEachPermissao(
+  callback: <T extends TelaPermissao>(
+    tela: T,
+    regras: readonly RegraPermissao<T>[]
+  ) => void
+) {
+  (Object.keys(permissoes) as Array<TelaPermissao>).forEach((tela) => {
+    callback(tela, permissoes[tela]);
+  });
+}
+
+// Função para criar objeto completo de permissões a partir de dados do banco
+export function criarObjetoPermissoes(
+  permissoesAtivas: PermissoesUsuarioInput
+): PermissoesCompletas {
+  const resultado = {} as PermissoesCompletas;
+
+  forEachPermissao((tela, regras) => {
+    (resultado as any)[tela] = {};
+    regras.forEach((regra) => {
+      (resultado as any)[tela][regra] = {
+        descricao: descricoesPermissoes[tela][regra],
+        temPermissao: permissoesAtivas[tela]?.includes(regra) ?? false,
+      };
+    });
+  });
+
+  return resultado;
+}
