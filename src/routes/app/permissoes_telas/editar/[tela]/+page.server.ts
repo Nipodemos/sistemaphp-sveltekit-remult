@@ -1,15 +1,16 @@
 import { remult } from "remult";
 import { Usuario } from "$shared/usuario/usuario.model";
 import { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
-import { criarObjetoPermissoes } from "$lib/utils/utils";
-import { permissoes, type TelaPermissao } from "$lib/types/permissoes";
-import { error, fail } from "@sveltejs/kit";
+import { METADADOS_TELAS, type Tela } from "$lib/types/permissoes";
 
-export async function load({ params }: any) {
-  const tela = params.tela as TelaPermissao;
+import { error, fail } from "@sveltejs/kit";
+import type { Actions, PageServerLoad } from "./$types";
+
+export const load: PageServerLoad = async ({ params }) => {
+  const tela = params.tela as Tela;
 
   // Validar se a tela existe
-  if (!permissoes[tela]) {
+  if (!METADADOS_TELAS[tela]) {
     throw error(404, `Tela '${tela}' não encontrada`);
   }
 
@@ -34,29 +35,44 @@ export async function load({ params }: any) {
   }
 
   // Preparar dados para o frontend
-  const usuariosComPermissoes = usuarios.map((usuario) => ({
-    id: usuario.id,
-    nome: usuario.nome,
-    login: usuario.login,
-    permissoes: criarObjetoPermissoes(
-      permissoesPorUsuario.get(usuario.id) || []
-    ),
-  }));
+  const usuariosComPermissoes = usuarios.map((usuario) => {
+    const permissoesUsuario = permissoesPorUsuario.get(usuario.id) || [];
+    const permissoesObj: Record<string, boolean> = {};
+
+    // Inicializar todas as permissões da tela como false
+    METADADOS_TELAS[tela].permissoes.forEach(({ chave }) => {
+      permissoesObj[chave] = false;
+    });
+
+    // Marcar as permissões ativas como true
+    permissoesUsuario.forEach((permissao) => {
+      if (permissao.regra in permissoesObj) {
+        permissoesObj[permissao.regra] = permissao.permitido;
+      }
+    });
+
+    return {
+      id: usuario.id,
+      nome: usuario.nome,
+      login: usuario.login,
+      permissoes: permissoesObj,
+    };
+  });
 
   return {
     tela,
     nomeTela: tela.charAt(0).toUpperCase() + tela.slice(1),
     usuarios: usuariosComPermissoes,
-    permissoesDisponiveis: permissoes[tela],
+    permissoesDisponiveis: METADADOS_TELAS[tela],
   };
-}
+};
 
 export const actions = {
   salvar: async ({ request, params }: any) => {
-    const tela = params.tela as TelaPermissao;
+    const tela = params.tela as Tela;
 
     // Validar se a tela existe
-    if (!permissoes[tela]) {
+    if (!METADADOS_TELAS[tela]) {
       return fail(404, { error: `Tela '${tela}' não encontrada` });
     }
 
@@ -73,7 +89,7 @@ export const actions = {
       // O formulário envia dados como: usuario_[id]_[permissao]=on
       const permissoesParaInserir: Array<{
         usuarioId: string;
-        tela: TelaPermissao;
+        tela: Tela;
         regra: string;
       }> = [];
 
@@ -86,7 +102,11 @@ export const actions = {
             const permissao = parts[2];
 
             // Validar se a permissão existe para esta tela
-            if ((permissoes[tela] as any)[permissao]) {
+            if (
+              METADADOS_TELAS[tela].permissoes.some(
+                (p) => p.chave === permissao
+              )
+            ) {
               permissoesParaInserir.push({
                 usuarioId,
                 tela,
@@ -113,4 +133,4 @@ export const actions = {
       });
     }
   },
-};
+} satisfies Actions;

@@ -3,10 +3,12 @@ import { Usuario } from "$shared/usuario/usuario.model";
 import { entities } from "../shared/entities";
 import bcrypt from "bcrypt";
 import { PermissionsController } from "$shared/permissao_usuario/permissao_usuario.controller";
-import { type PermissoesCompletas } from "$lib/types/permissoes";
+import {
+  desserializarPermissoesDoDB,
+  type PermissoesCompletas,
+} from "$lib/types/permissoes";
 import { SqlDatabase, type UserInfo } from "remult";
 import Database from "better-sqlite3";
-import { criarObjetoPermissoes } from "$lib/utils/utils";
 import { BetterSqlite3DataProvider } from "remult/remult-better-sqlite3";
 
 export interface UsuarioLogado extends UserInfo {
@@ -45,12 +47,7 @@ export const api = remultApi({
     }
   },
 
-  getUser: async (event): Promise<UsuarioLogado | undefined> => {
-    // console.log("🔍 getUser chamado");
-    // console.log(
-    // "🔍 event.locals.usuario:",
-    // event.locals.usuario ? "presente" : "ausente"
-    // );
+  getUser: async (event): Promise<UserInfo | undefined> => {
     if (!event.locals.usuario) {
       // console.log("🔍 Nenhum usuário em locals");
       return undefined;
@@ -60,18 +57,14 @@ export const api = remultApi({
     // Busca as permissões no formato do banco de dados { vendas: ['criar'], ... }
     const permissoesDoDb = usuario.permissoes;
 
-    let permissionsForClient = criarObjetoPermissoes(permissoesDoDb);
+    let permissionsForClient: PermissoesCompletas =
+      desserializarPermissoesDoDB(permissoesDoDb);
     // console.log("🔍 Retornando usuário:", event.locals.usuario.nome);
     // Retorna o objeto completo do usuário para a sessão do Remult
     return {
       id: event.locals.usuario.id,
       name: event.locals.usuario.nome,
-      nome: event.locals.usuario.nome,
       roles: event.locals.usuario.cargos,
-      cargos: event.locals.usuario.cargos,
-      login: event.locals.usuario.login,
-
-      permissions: permissionsForClient,
     };
   },
 });

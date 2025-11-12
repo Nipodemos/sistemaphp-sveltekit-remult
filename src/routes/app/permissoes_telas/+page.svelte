@@ -1,20 +1,16 @@
 <script lang="ts">
-  import {
-    permissoes,
-    descricoesPermissoes,
-    descricoesTelas,
-    type TelaPermissao,
-  } from "$lib/types/permissoes";
+  import { METADADOS_TELAS, type Tela } from "$lib/types/permissoes";
   import { goto } from "$app/navigation";
 
-  // Gerar lista de telas a partir das chaves do objeto permissoes
-  const telas = (Object.keys(permissoes) as TelaPermissao[]).map((id) => ({
+  // Gerar lista de telas a partir das chaves do objeto METADADOS_TELAS
+  const telas: { id: Tela; nome: string }[] = (
+    Object.keys(METADADOS_TELAS) as Tela[]
+  ).map((id) => ({
     id,
-    nome: id.charAt(0).toUpperCase() + id.slice(1), // Capitalizar primeira letra
-    descricao: descricoesTelas[id] ?? "Descrição não encontrada",
+    nome: METADADOS_TELAS[id].nome,
   }));
 
-  function editarPermissoesTela(tela: TelaPermissao) {
+  function editarPermissoesTela(tela: Tela) {
     goto(`/app/permissoes_telas/editar/${tela}`);
   }
 </script>
@@ -37,18 +33,16 @@
         class="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow"
       >
         <h2 class="text-xl font-semibold mb-2">{tela.nome}</h2>
-        <p class="text-gray-600 mb-4">{tela.descricao}</p>
 
         <div class="mb-4">
           <h3 class="font-medium text-sm text-gray-700 mb-2">
             Permissões disponíveis:
           </h3>
           <ul class="text-sm text-gray-600 space-y-1">
-            {#each permissoes[tela.id] as permissao (permissao)}
-              <li class="flex items-center" data-permissao={permissao}>
+            {#each METADADOS_TELAS[tela.id].permissoes as permissao}
+              <li class="flex items-center">
                 <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                {(descricoesPermissoes[tela.id] as any)?.[permissao] ??
-                  "Descrição não encontrada"}
+                {permissao.descricao}
               </li>
             {/each}
           </ul>
@@ -64,9 +58,3 @@
     {/each}
   </div>
 </div>
-
-<style>
-  .container {
-    max-width: 1200px;
-  }
-</style>

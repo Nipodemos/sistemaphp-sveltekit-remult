@@ -1,6 +1,9 @@
 <script>
   import { routes } from "$lib/ROUTES";
+  import { page } from "$app/stores";
   const { children } = $props();
+
+  let errorMessage = $derived($page.url.searchParams.get("error"));
 </script>
 
 <div style="display: flex; gap: 1rem;">
@@ -16,6 +19,13 @@
   </div>
 
   <div>
+    {#if errorMessage === "permissao_negada"}
+      <div
+        style="color: red; border: 1px solid red; padding: 1rem; margin-bottom: 1rem;"
+      >
+        Você não tem permissão para acessar esta página.
+      </div>
+    {/if}
     {@render children()}
   </div>
 </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { remult, type EntityFilter, type FindOptions } from "remult";
+  import { remult, type FindOptions } from "remult";
   import { Produto } from "$shared/produto/produto.model";
   import { Fornecedor } from "$shared/fornecedor/fornecedor.model";
 
@@ -43,10 +43,10 @@
               searchTerm.toUpperCase().startsWith("PROD") ||
               /^\d+$/.test(searchTerm.trim())
             ) {
-              let codigo = Number(searchTerm.replace("FORN", ""));
+              let codigo = searchTerm.replace("FORN", "");
               conditions.where = {
                 fornecedor: await repoFornecedor.findOne({
-                  where: { sequencial: codigo },
+                  where: { codigo: codigo },
                 }),
               };
             } else {

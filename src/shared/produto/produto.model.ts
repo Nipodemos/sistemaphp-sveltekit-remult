@@ -9,14 +9,15 @@ import type { TypeTipoVariacao } from "$lib/types/variacao.types";
     const repo = remult.repo(Produto);
     if (e.isNew) {
       // Gerar código sequencial único
-      const maxSequencial = await repo
-        .find({
-          orderBy: { codigo: "desc" },
-          limit: 1,
-        })
-        .then((results) => (results[0] ? parseInt(results[0].codigo) : 0));
-      const novoNumero = maxSequencial + 1;
-      produto.codigo = novoNumero.toString();
+      const ultimoProduto = await repo.findOne({
+        orderBy: { codigo: "desc" },
+      });
+      let novoNumero = 1;
+      if (ultimoProduto) {
+        novoNumero = Number(ultimoProduto.codigo.replace(/^PROD/, "")) + 1;
+      }
+
+      produto.codigo = "PROD" + novoNumero;
     } else {
       const produtoAntigo = await repo.findId(produto.id);
 
@@ -31,11 +32,11 @@ export class Produto {
   @Fields.id()
   id = "";
 
-  @Fields.string<number>({
+  @Fields.string({
     validate: [Validators.required, Validators.unique()],
     valueConverter: {
       toDb: (value: string) => value.replace(/^PROD/, ""), // Remove prefixo PROD se existir
-      fromDb: (value: string) => `PROD${value}`, // Adiciona prefixo ao carregar
+      fromDb: (value: string) => `PROD${value.padStart(3, "0")}`, // Adiciona prefixo ao carregar
     },
   })
   codigo!: string;

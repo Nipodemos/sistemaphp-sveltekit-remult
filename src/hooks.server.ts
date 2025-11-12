@@ -8,12 +8,17 @@ export const handleAuth: Handle = async ({ event, resolve }) => {
   console.log("🔍 Token no cookie:", token ? "presente" : "ausente");
 
   event.locals.usuario = null;
+  event.locals.permissoesCompletas = null;
 
   if (token) {
-    const user = verifySessionToken(token);
-    console.log("🔍 Usuário verificado:", user ? user.nome : "inválido");
-    if (user) {
-      event.locals.usuario = user;
+    const dadosParaLocals = verifySessionToken(token);
+    console.log(
+      "🔍 Usuário verificado:",
+      dadosParaLocals ? dadosParaLocals.usuario?.nome : "inválido"
+    );
+    if (dadosParaLocals) {
+      event.locals.usuario = dadosParaLocals.usuario;
+      event.locals.permissoesCompletas = dadosParaLocals.permissoesCompletas;
     }
   } else {
     console.log("🔍 Nenhum token encontrado");

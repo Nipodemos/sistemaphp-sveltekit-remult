@@ -1,48 +1,5 @@
-import {
-  permissoes,
-  descricoesPermissoes,
-  type PermissoesCompletas,
-  type PermissoesUsuarioInput,
-} from "$lib/types/permissoes";
 import { Categoria } from "$shared/categoria/categoria.model";
-import type { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
 import { remult } from "remult";
-
-export function criarObjetoPermissoes(
-  permissoesUsuarios?: PermissaoUsuario[]
-): PermissoesCompletas {
-  const resultado = {} as PermissoesCompletas;
-
-  // Iterar sobre todas as telas e regras
-  for (const [tela, regras] of Object.entries(permissoes)) {
-    (resultado as any)[tela] = {};
-    for (const regra of regras) {
-      (resultado as any)[tela][regra] = {
-        descricao:
-          descricoesPermissoes[tela as keyof typeof descricoesPermissoes][
-            regra as keyof (typeof descricoesPermissoes)[keyof typeof descricoesPermissoes]
-          ],
-        temPermissao: false,
-      };
-    }
-  }
-
-  if (!permissoesUsuarios) {
-    return resultado;
-  }
-
-  // Marcar as permissões ativas como true
-  for (const permissao of permissoesUsuarios) {
-    const tela = permissao.tela as keyof PermissoesCompletas;
-    const regra = permissao.regra as keyof PermissoesCompletas[typeof tela];
-
-    if (resultado[tela] && resultado[tela][regra]) {
-      resultado[tela][regra].temPermissao = true;
-    }
-  }
-
-  return resultado;
-}
 
 export interface PesquisaCodigoDescricao {
   codigo: string | null;

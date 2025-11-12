@@ -1,6 +1,6 @@
 // src/shared/PermissaoUsuario.ts
 import { Allow, Entity, Fields, Relations } from "remult";
-import { type TelaPermissao, permissoes } from "$lib/types/permissoes";
+import { type Tela, METADADOS_TELAS } from "$lib/types/permissoes";
 import { Usuario } from "$shared/usuario/usuario.model";
 
 @Entity("permissoesUsuario", {
@@ -13,7 +13,9 @@ import { Usuario } from "$shared/usuario/usuario.model";
   },
 })
 export class PermissaoUsuario {
-  @Relations.toOne(() => Usuario)
+  @Relations.toOne(() => Usuario, {
+    dbName: "usuario_id",
+  })
   usuario?: Usuario;
 
   @Fields.string({
@@ -22,26 +24,31 @@ export class PermissaoUsuario {
   usuarioId = "";
 
   // Usamos um validador para garantir que a tela existe na nossa Fonte da Verdade
-  @Fields.string<PermissaoUsuario>({
+  @Fields.string<Tela>({
     validate: (e, field) => {
-      // Validação usando nosso objeto 'permissions'
-      const telasValidas = Object.keys(permissoes);
+      // Validação usando nosso objeto 'METADADOS_TELAS'
+      const telasValidas = Object.keys(METADADOS_TELAS);
       if (!telasValidas.includes(field.value)) {
         throw `Tela '${field.value}' é inválida.`;
       }
     },
   })
-  tela: TelaPermissao = "vendas"; // Valor default apenas para satisfazer o tipo
+  tela!: Tela; // Valor default apenas para satisfazer o tipo
 
-  @Fields.string<PermissaoUsuario>({
-    validate: (e, field) => {
+  @Fields.string({
+    validate: (entity: PermissaoUsuario, field) => {
       // Validar se a regra existe para a tela específica
-      const tela = e.tela as TelaPermissao;
-      const regrasValidas = Object.keys(permissoes[tela] || {});
+      const tela = entity.tela as Tela;
+      const regrasValidas = Object.keys(
+        METADADOS_TELAS[tela]?.permissoes || {}
+      );
       if (!regrasValidas.includes(field.value)) {
         throw `Regra '${field.value}' é inválida para a tela '${tela}'.`;
       }
     },
   })
   regra = ""; // Aqui guardamos 'visualizar', 'criar', etc.
+
+  @Fields.boolean()
+  permitido = false; // Indica se o usuário tem permissão para esta regra nesta tela
 }

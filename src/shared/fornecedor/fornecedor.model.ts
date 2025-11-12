@@ -7,9 +7,21 @@ export type TipoDocumento = "CPF" | "CNPJ";
 @Entity<Fornecedor>("fornecedores", {
   allowApiCrud: Allow.authenticated,
   saving: async (fornecedor, e) => {
-    if (!e.isNew) {
+    if (e.isNew) {
+      // Gerar código sequencial único
+      const repo = remult.repo(Fornecedor);
+      const ultimoFornecedor = await repo.findOne({
+        orderBy: { codigo: "desc" },
+      });
+      let novoNumero = 1;
+      if (ultimoFornecedor) {
+        novoNumero = Number(ultimoFornecedor.codigo.replace(/^FORN/, "")) + 1;
+      }
+
+      fornecedor.codigo = "FORN" + novoNumero;
+    } else {
       const original = await remult.repo(Fornecedor).findId(fornecedor.id);
-      if (original && original.sequencial !== fornecedor.sequencial) {
+      if (original && original.codigo !== fornecedor.codigo) {
         throw new Error("Código não pode ser alterado após a criação");
       }
     }
@@ -19,11 +31,12 @@ export class Fornecedor {
   @Fields.id()
   id = "";
 
-  @Fields.autoIncrement()
-  public sequencial!: number;
-
-  @Fields.string<Fornecedor>({
-    sqlExpression: () => `'FORN' || lpad(CAST(sequencial AS TEXT), 3, '0')`,
+  @Fields.string({
+    validate: [Validators.required, Validators.unique],
+    valueConverter: {
+      toDb: (value: string) => value.replace(/^FORN/, ""), // Remove prefixo FORN se existir
+      fromDb: (value: string) => `FORN${value.padStart(3, "0")}`, // Adiciona prefixo ao carregar
+    },
   })
   codigo!: string;
 

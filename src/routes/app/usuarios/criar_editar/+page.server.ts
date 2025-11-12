@@ -5,14 +5,18 @@ import { Usuario } from "$shared/usuario/usuario.model";
 import { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
 import { fail } from "@sveltejs/kit";
 import bcrypt from "bcrypt";
-import { permissoes, type PermissoesCompletas } from "$lib/types/permissoes";
-import { criarObjetoPermissoes } from "$lib/utils/utils";
+import {
+  METADADOS_TELAS,
+  type PermissoesCompletas,
+  desserializarPermissoesDoDB,
+} from "$lib/types/permissoes";
 
 export const load: PageServerLoad = async ({ url }) => {
   const id = url.searchParams.get("id");
   const repoUsuario = repo(Usuario);
   let user = repoUsuario.create();
-  let permissoesCompletasUsuario: PermissoesCompletas = criarObjetoPermissoes();
+  let permissoesCompletasUsuario: PermissoesCompletas =
+    desserializarPermissoesDoDB();
   if (id) {
     try {
       let usuarioEncontrado = await repoUsuario.findFirst(
@@ -24,7 +28,7 @@ export const load: PageServerLoad = async ({ url }) => {
       }
       user = usuarioEncontrado;
 
-      permissoesCompletasUsuario = criarObjetoPermissoes(
+      permissoesCompletasUsuario = desserializarPermissoesDoDB(
         usuarioEncontrado.permissoes
       );
     } catch (error) {
@@ -97,7 +101,7 @@ export const actions: Actions = {
       if (user.id) {
         // Construir PermissoesUsuarioInput a partir do form
         const permissoesNovas: Record<string, string[]> = {};
-        for (const [tela, regras] of Object.entries(permissoes)) {
+        for (const [tela, regras] of Object.entries(METADADOS_TELAS)) {
           const selecionadas: string[] = [];
           for (const regra of Object.keys(regras)) {
             if (formData.get(`permission_${tela}_${regra}`) === "on") {
@@ -116,16 +120,17 @@ export const actions: Actions = {
 
       // Recarregar as permissões do DB e gerar o objeto completo com util
       let userPermissions: PermissoesCompletas = JSON.parse(
-        JSON.stringify(permissoes)
+        JSON.stringify(METADADOS_TELAS)
       );
       let permissoesCompletasUsuario: PermissoesCompletas =
-        criarObjetoPermissoes();
+        desserializarPermissoesDoDB();
       if (user.id) {
         const permissoesUsuario = await repo(PermissaoUsuario).find({
           where: { usuarioId: user.id },
         });
         // usar a função util para criar o objeto final de permissões
-        permissoesCompletasUsuario = criarObjetoPermissoes(permissoesUsuario);
+        permissoesCompletasUsuario =
+          desserializarPermissoesDoDB(permissoesUsuario);
 
         // Também popular userPermissions no shape anterior para compatibilidade
         for (const permissao of permissoesUsuario) {

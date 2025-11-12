@@ -1,7 +1,7 @@
 import { redirect, type Actions } from "@sveltejs/kit";
 import { remult } from "remult";
 import { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
-import { criarObjetoPermissoes } from "$lib/utils/utils";
+import { desserializarPermissoesDoDB } from "$lib/types/permissoes";
 
 export async function load({ locals }) {
   if (!locals.usuario) {
@@ -14,7 +14,7 @@ export async function load({ locals }) {
   });
 
   // Criar objeto completo
-  const permissoesCompletas = criarObjetoPermissoes(permissoesUsuario);
+  const permissoesCompletas = desserializarPermissoesDoDB(permissoesUsuario);
 
   return {
     usuario: locals.usuario,
