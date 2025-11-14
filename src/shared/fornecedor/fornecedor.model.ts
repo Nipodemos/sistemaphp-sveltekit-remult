@@ -1,5 +1,5 @@
 import { Allow, Entity, Fields, Relations, remult, Validators } from "remult";
-import { validarCPF, validarCNPJ, validarTelefone } from "$lib/utils/utils";
+import { validarCPF, validarCNPJ, validarTelefone, validarEmail, validarEstado, validarCEP } from "$lib/utils/utils";
 import { Produto } from "$shared/produto/produto.model";
 
 export type TipoDocumento = "CPF" | "CNPJ";
@@ -25,6 +25,14 @@ export type TipoDocumento = "CPF" | "CNPJ";
         throw new Error("Código não pode ser alterado após a criação");
       }
     }
+
+    // Validar que pelo menos um dos campos de contato do representante está preenchido
+    const telefonePreenchido = fornecedor.representanteTelefone && fornecedor.representanteTelefone.trim() !== "";
+    const emailPreenchido = fornecedor.representanteEmail && fornecedor.representanteEmail.trim() !== "";
+    
+    if (!telefonePreenchido && !emailPreenchido) {
+      throw new Error("É obrigatório preencher pelo menos um dos campos: telefone ou email do representante");
+    }
   },
 })
 export class Fornecedor {
@@ -41,29 +49,27 @@ export class Fornecedor {
   codigo!: string;
 
   @Fields.string<Fornecedor>({
-    validate: (fornecedor) => {
-      if (!fornecedor.razaoSocial?.trim())
-        throw new Error("Razão social é obrigatória");
-    },
+    validate: [Validators.required("Razão social é obrigatória")],
   })
   razaoSocial = "";
 
   @Fields.string<Fornecedor>({
-    validate: (fornecedor) => {
-      if (!fornecedor.nomeFantasia?.trim())
-        throw new Error("Nome fantasia é obrigatório");
-    },
+    validate: [Validators.required("Nome fantasia é obrigatório")],
   })
   nomeFantasia = "";
 
-  @Fields.string()
+  @Fields.string({
+    validate: [Validators.required("Tipo de documento é obrigatório")],
+  })
   tipoDocumento: TipoDocumento = "CNPJ";
 
   @Fields.string<Fornecedor>({
     validate: [
-      Validators.required,
-      Validators.unique,
+      Validators.required("Documento é obrigatório"),
+      Validators.unique("Documento já cadastrado"),
       (fornecedor) => {
+        if (!fornecedor.documento) return;
+        
         if (fornecedor.tipoDocumento === "CPF") {
           if (!validarCPF(fornecedor.documento)) {
             throw new Error("CPF inválido");
@@ -80,12 +86,12 @@ export class Fornecedor {
 
   // Endereço
   @Fields.string({
-    validate: Validators.required,
+    validate: Validators.required("Rua é obrigatória"),
   })
   rua = "";
 
   @Fields.string({
-    validate: Validators.required,
+    validate: Validators.required("Número é obrigatório"),
   })
   numero = "";
 
@@ -93,33 +99,47 @@ export class Fornecedor {
   complemento = "";
 
   @Fields.string({
-    validate: Validators.required,
+    validate: Validators.required("Bairro é obrigatório"),
   })
   bairro = "";
 
   @Fields.string({
-    validate: Validators.required,
+    validate: Validators.required("Cidade é obrigatória"),
   })
   cidade = "";
 
-  @Fields.string({
-    validate: Validators.required,
+  @Fields.string<Fornecedor>({
+    validate: [
+      Validators.required("Estado é obrigatório"),
+      (fornecedor) => {
+        if (fornecedor.estado && !validarEstado(fornecedor.estado)) {
+          throw new Error("Estado (UF) inválido");
+        }
+      },
+    ],
   })
   estado = "";
 
-  @Fields.string({
-    validate: Validators.required,
+  @Fields.string<Fornecedor>({
+    validate: [
+      Validators.required("CEP é obrigatório"),
+      (fornecedor) => {
+        if (fornecedor.cep && !validarCEP(fornecedor.cep)) {
+          throw new Error("CEP inválido. Deve conter 8 dígitos");
+        }
+      },
+    ],
   })
   cep = "";
 
   // Contato
   @Fields.string<Fornecedor>({
     validate: [
-      Validators.required,
+      Validators.required("Telefone principal é obrigatório"),
       (fornecedor) => {
-        if (!validarTelefone(fornecedor.telefonePrincipal)) {
+        if (fornecedor.telefonePrincipal && !validarTelefone(fornecedor.telefonePrincipal)) {
           throw new Error(
-            "Telefone deve ter 10 ou 11 dígitos (DDD + 8 ou 9 dígitos)"
+            "Telefone principal deve ter 10 ou 11 dígitos (DDD + 8 ou 9 dígitos)"
           );
         }
       },
@@ -142,18 +162,11 @@ export class Fornecedor {
   telefoneSecundario = "";
 
   @Fields.string<Fornecedor>({
-    validate: (fornecedor) => {
-      if (fornecedor.email && !Fornecedor.validarEmail(fornecedor.email)) {
-        throw new Error("Email inválido");
-      }
-    },
+    validate: [Validators.email("Email inválido")],
   })
   email = "";
 
-  // Representante
-  @Fields.string({
-    validate: Validators.required,
-  })
+  @Fields.string()
   representanteNome = "";
 
   @Fields.string<Fornecedor>({
@@ -174,7 +187,7 @@ export class Fornecedor {
     validate: (fornecedor) => {
       if (
         fornecedor.representanteEmail &&
-        !Fornecedor.validarEmail(fornecedor.representanteEmail)
+        !validarEmail(fornecedor.representanteEmail)
       ) {
         throw new Error("Email do representante inválido");
       }
@@ -191,8 +204,4 @@ export class Fornecedor {
   @Fields.updatedAt()
   alteradoEm?: Date;
 
-  private static validarEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
 }
