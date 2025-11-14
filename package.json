@@ -13,6 +13,8 @@
     "test:ui": "vitest --ui"
   },
   "devDependencies": {
+    "@skeletonlabs/skeleton": "^4.3.3",
+    "@skeletonlabs/skeleton-svelte": "^4.3.3",
     "@sveltejs/adapter-auto": "^3.3.1",
     "@sveltejs/kit": "^2.21.2",
     "@sveltejs/vite-plugin-svelte": "^5.1.0",
