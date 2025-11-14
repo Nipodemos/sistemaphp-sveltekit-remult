@@ -58,7 +58,7 @@ export const api = remultApi({
     const permissoesDoDb = usuario.permissoes;
 
     let permissionsForClient: PermissoesCompletas =
-      desserializarPermissoesDoDB(permissoesDoDb);
+      desserializarPermissoesDoDB(permissoesDoDb ?? []);
     // console.log("🔍 Retornando usuário:", event.locals.usuario.nome);
     // Retorna o objeto completo do usuário para a sessão do Remult
     return {

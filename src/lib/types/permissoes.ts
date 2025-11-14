@@ -283,7 +283,7 @@ export const serializarParaDB = (
  * @returns Objeto de permissões completas com descrições e status
  */
 export const desserializarPermissoesDoDB = (
-  permissoesUsuarios?: PermissaoUsuario[]
+  permissoesUsuarios: PermissaoUsuario[]
 ): PermissoesCompletas => {
   const resultado = {} as PermissoesCompletas;
 

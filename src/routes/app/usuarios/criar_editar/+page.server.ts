@@ -11,12 +11,12 @@ import {
   desserializarPermissoesDoDB,
 } from "$lib/types/permissoes";
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url,locals }) => {
   const id = url.searchParams.get("id");
   const repoUsuario = repo(Usuario);
   let user = repoUsuario.create();
   let permissoesCompletasUsuario: PermissoesCompletas =
-    desserializarPermissoesDoDB();
+    locals.permissoesCompletas ?? desserializarPermissoesDoDB([]);
   if (id) {
     try {
       let usuarioEncontrado = await repoUsuario.findFirst(
@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ url }) => {
       user = usuarioEncontrado;
 
       permissoesCompletasUsuario = desserializarPermissoesDoDB(
-        usuarioEncontrado.permissoes
+        usuarioEncontrado.permissoes ?? []
       );
     } catch (error) {
       console.warn("Erro ao carregar usuário ou permissões:", error);
@@ -122,16 +122,13 @@ export const actions: Actions = {
       let userPermissions: PermissoesCompletas = JSON.parse(
         JSON.stringify(METADADOS_TELAS)
       );
-      let permissoesCompletasUsuario: PermissoesCompletas =
-        desserializarPermissoesDoDB();
+      let permissoesCompletasUsuario = desserializarPermissoesDoDB([]);
+      
       if (user.id) {
         const permissoesUsuario = await repo(PermissaoUsuario).find({
           where: { usuarioId: user.id },
         });
         // usar a função util para criar o objeto final de permissões
-        permissoesCompletasUsuario =
-          desserializarPermissoesDoDB(permissoesUsuario);
-
         // Também popular userPermissions no shape anterior para compatibilidade
         for (const permissao of permissoesUsuario) {
           const tela = permissao.tela as keyof typeof userPermissions;

@@ -9,7 +9,7 @@ import {
 
 export function createSessionToken(usuarioQuerendoLogar: Usuario): string {
   // Carregar permissões do DB como array
-  const permissoesArray = usuarioQuerendoLogar.permissoes;
+  const permissoesArray = usuarioQuerendoLogar.permissoes ?? [];
 
   // Desserializar para o formato completo usado pelo cliente
   const permissoesCompletas: PermissoesCompletas =

@@ -5,14 +5,13 @@
   import type { PageProps } from "./$types";
   import { enhance } from "$app/forms";
   import type { PermissoesCompletas } from "$lib/types/permissoes";
-  import { criarObjetoPermissoes } from "$lib/utils/utils";
-  import { permissoes } from "$lib/types/permissoes";
+  import { METADADOS_TELAS, desserializarPermissoesDoDB } from "$lib/types/permissoes";
 
   let { data, form }: PageProps = $props();
 
   let user = $state<Usuario>(data.user || repo(Usuario).create());
   let permissoesCompletasUsuario = $state<PermissoesCompletas>(
-    data.permissoesCompletasUsuario ?? criarObjetoPermissoes()
+    data.permissoesCompletasUsuario ?? desserializarPermissoesDoDB([])
   );
   let confirmPassword = $state("");
   let showPassword = $state(false);
@@ -59,7 +58,10 @@
     T extends Tela,
     R extends keyof PermissoesCompletas[T],
   >(tela: T, regra: R) {
-    return (permissoes as any)[tela]?.[regra] ?? { descricao: "" };
+    const permissao = METADADOS_TELAS[tela]?.permissoes.find(
+      (p) => p.chave === regra
+    );
+    return permissao ? { descricao: permissao.descricao } : { descricao: "" };
   }
 </script>
 
