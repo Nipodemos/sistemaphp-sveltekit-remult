@@ -123,6 +123,26 @@ export function validarEmail(email: string): boolean {
   return emailRegex.test(email.trim());
 }
 
+export function validarCEP(cep: string): boolean {
+  if (!cep || typeof cep !== "string") {
+    return false;
+  }
+
+  const cepLimpo = cep.replace(/\D/g, "");
+
+  // CEP deve ter exatamente 8 dígitos
+  if (cepLimpo.length !== 8) {
+    return false;
+  }
+
+  // CEP não pode ser todos os dígitos iguais (ex: 00000000, 11111111)
+  if (/^(\d)\1{7}$/.test(cepLimpo)) {
+    return false;
+  }
+
+  return true;
+}
+
 export function validarEstado(estado: string): boolean {
   if (!estado || typeof estado !== "string") {
     return false;
