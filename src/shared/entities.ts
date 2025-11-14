@@ -12,7 +12,6 @@
 
 import { Usuario } from "./usuario/usuario.model";
 import { PermissaoUsuario } from "./permissao_usuario/permissao_usuario.model";
-import { Tela } from "./tela/tela.model";
 import type { ClassType } from "remult";
 import { Categoria } from "./categoria/categoria.model";
 import { Produto } from "./produto/produto.model";
@@ -28,7 +27,6 @@ import { VariacaoValor } from "./variacao_valor/variacao_valor.model";
 export const entities: ClassType<any>[] = [
   Usuario,
   PermissaoUsuario,
-  Tela,
   Categoria,
   Produto,
   Fornecedor,

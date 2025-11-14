@@ -4,6 +4,7 @@
   const { children } = $props();
 
   let errorMessage = $derived($page.url.searchParams.get("error"));
+  let tela = $derived($page.url.searchParams.get("tela"));
 </script>
 
 <div style="display: flex; gap: 1rem;">
@@ -23,7 +24,7 @@
       <div
         style="color: red; border: 1px solid red; padding: 1rem; margin-bottom: 1rem;"
       >
-        Você não tem permissão para acessar esta página.
+        Você não tem permissão para acessar a página de {tela}.
       </div>
     {/if}
     {@render children()}
