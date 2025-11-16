@@ -1,23 +1,12 @@
 import { remultApi } from "remult/remult-sveltekit";
 import { Usuario } from "$shared/usuario/usuario.model";
+import { Tela } from "$shared/tela/tela.model";
 import { entities } from "../shared/entities";
 import bcrypt from "bcrypt";
 import { PermissionsController } from "$shared/permissao_usuario/permissao_usuario.controller";
-import {
-  desserializarPermissoesDoDB,
-  type PermissoesCompletas,
-} from "$lib/types/permissoes";
 import { SqlDatabase, type UserInfo } from "remult";
 import Database from "better-sqlite3";
 import { BetterSqlite3DataProvider } from "remult/remult-better-sqlite3";
-
-export interface UsuarioLogado extends UserInfo {
-  id: string;
-  nome: string;
-  cargos: string[];
-  login: string;
-  permissions: PermissoesCompletas;
-}
 
 export const api = remultApi({
   admin: true,
@@ -45,6 +34,38 @@ export const api = remultApi({
       ];
       await repoUsuario.insert(usuario);
     }
+
+    // Preencher telas
+    const repoTela = remult.repo(Tela);
+    const telasParaInserir = [
+      {
+        nome: "Categorias",
+        categoria: "Produtos",
+        caminhoUrl: "/app/categorias",
+      },
+      {
+        nome: "Fornecedores",
+        categoria: "Produtos",
+        caminhoUrl: "/app/fornecedores",
+      },
+      {
+        nome: "Permissões de Telas",
+        categoria: "Sistema",
+        caminhoUrl: "/app/permissoes_telas",
+      },
+      { nome: "Produtos", categoria: "Produtos", caminhoUrl: "/app/produtos" },
+      { nome: "Telas", categoria: "Sistema", caminhoUrl: "/app/telas" },
+      { nome: "Usuários", categoria: "Sistema", caminhoUrl: "/app/usuarios" },
+    ];
+
+    for (const tela of telasParaInserir) {
+      const existente = await repoTela.findFirst({
+        caminhoUrl: tela.caminhoUrl,
+      });
+      if (!existente) {
+        await repoTela.insert(tela);
+      }
+    }
   },
 
   getUser: async (event): Promise<UserInfo | undefined> => {
@@ -52,15 +73,7 @@ export const api = remultApi({
       // console.log("🔍 Nenhum usuário em locals");
       return undefined;
     }
-    let usuario = event.locals.usuario;
 
-    // Busca as permissões no formato do banco de dados { vendas: ['criar'], ... }
-    const permissoesDoDb = usuario.permissoes;
-
-    let permissionsForClient: PermissoesCompletas =
-      desserializarPermissoesDoDB(permissoesDoDb ?? []);
-    // console.log("🔍 Retornando usuário:", event.locals.usuario.nome);
-    // Retorna o objeto completo do usuário para a sessão do Remult
     return {
       id: event.locals.usuario.id,
       name: event.locals.usuario.nome,
