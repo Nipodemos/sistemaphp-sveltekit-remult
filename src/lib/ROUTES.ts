@@ -21,7 +21,9 @@ const PAGES = {
   "/app/produtos": `/app/produtos`,
   "/app/produtos/criar_editar": `/app/produtos/criar_editar`,
   "/app/usuarios": `/app/usuarios`,
-  "/app/usuarios/criar_editar": `/app/usuarios/criar_editar`,
+  "/app/usuarios/gerenciar-[id]": (params: { id: (string | number) }) => {
+    return `/app/usuarios/gerenciar-${params['id']}`
+  },
   "/login": `/login`
 }
 
@@ -40,7 +42,9 @@ const ACTIONS = {
   "salvar /app/permissoes_telas/editar/[tela]": (params: { tela: (string | number) }) => {
     return `/app/permissoes_telas/editar/${params['tela']}?/salvar`
   },
-  "save /app/usuarios/criar_editar": `/app/usuarios/criar_editar?/save`,
+  "save /app/usuarios/gerenciar-[id]": (params: { id: (string | number) }) => {
+    return `/app/usuarios/gerenciar-${params['id']}?/save`
+  },
   "default /login": `/login`
 }
 
@@ -156,9 +160,9 @@ export function route<T extends keyof AllTypes>(key: T, ...params: any[]): strin
 * ```
 */
 export type KIT_ROUTES = {
-  PAGES: { '/app': never, '/app/categorias': never, '/app/categorias/criar_editar': never, '/app/fornecedores': never, '/app/fornecedores/criar_editar': never, '/app/permissoes_telas': never, '/app/permissoes_telas/editar/[tela]': 'tela', '/app/produtos': never, '/app/produtos/criar_editar': never, '/app/usuarios': never, '/app/usuarios/criar_editar': never, '/login': never }
+  PAGES: { '/app': never, '/app/categorias': never, '/app/categorias/criar_editar': never, '/app/fornecedores': never, '/app/fornecedores/criar_editar': never, '/app/permissoes_telas': never, '/app/permissoes_telas/editar/[tela]': 'tela', '/app/produtos': never, '/app/produtos/criar_editar': never, '/app/usuarios': never, '/app/usuarios/gerenciar-[id]': 'id', '/login': never }
   SERVERS: Record<string, never>
-  ACTIONS: { 'logout /app': never, 'salvar /app/permissoes_telas/editar/[tela]': 'tela', 'save /app/usuarios/criar_editar': never, 'default /login': never }
+  ACTIONS: { 'logout /app': never, 'salvar /app/permissoes_telas/editar/[tela]': 'tela', 'save /app/usuarios/gerenciar-[id]': 'id', 'default /login': never }
   LINKS: Record<string, never>
-  Params: { 'tela': never }
+  Params: { 'tela': never, 'id': never }
 }
