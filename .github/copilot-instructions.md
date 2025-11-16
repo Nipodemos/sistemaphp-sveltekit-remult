@@ -4,38 +4,51 @@
 
 This is a **SvelteKit + Remult** fullstack application with:
 
-- **Frontend**: SvelteKit with Svelte 5 runes
-- **Backend**: Remult for type-safe CRUD operations
-- **Database**: JSON files (development) - easily replaceable with SQL databases
+- **Frontend**: SvelteKit with Svelte 5 runes for reactive components
+- **Backend**: Remult for type-safe CRUD operations and API generation
+- **Database**: SQLite (better-sqlite3) for development and production
 - **Authentication**: JWT-based with session tokens stored in httpOnly cookies
-- **Authorization**: Custom role-based permission system with granular screen-level controls
+- **Authorization**: Custom role-based permission system with screen-level controls
+- **Styling**: TailwindCSS with SkeletonLabs components
+- **Testing**: Vitest for unit tests
+- **Build Tool**: Vite with SvelteKit adapter
 
 ## Key Architectural Patterns
 
 ### Entity Management
 
 - **Centralized Registration**: All entities are registered in `src/shared/entities.ts` array
-- **Auto-Registration**: Adding an entity to the array automatically enables Remult API endpoints
+- **Auto-Registration**: Adding an entity to the array automatically enables Remult API endpoints at `/api/[entity]`
 - **Import Path**: Use `$shared/` alias for shared entities (configured in `svelte.config.js`)
 
 ### Authentication Flow
 
 ```typescript
-// Login creates JWT token → stored in httpOnly cookie → verified in hooks.server.ts
-// User data attached to request.locals → available in all protected routes
+// Login creates JWT token → stored in httpOnly cookie → verified in src/hooks.server.ts
+// User data and permissions attached to request.locals → available in all protected routes
+// Permissions are loaded as PermissaoUsuario[] and deserialized to PermissoesCompletas object
 ```
 
 ### Permission System
 
-- **Structure**: Screen-based permissions defined in `src/lib/types/permissoes.ts`
+- **Structure**: Screen-based permissions defined in `src/lib/types/permissoes.ts` (METADADOS_TELAS)
 - **Storage**: Permissions stored as separate `PermissaoUsuario` entities with user-screen-rule relationships
-- **Runtime**: Permissions converted to nested object structure for client-side checks
+- **Runtime**: Permissions deserialized from DB array to nested object structure using `desserializarPermissoesDoDB()`
 - **Validation**: Server-side validation ensures only valid permission combinations
+- **Client-side Checks**: Use `permissoesCompletas[tela][regra].temPermissao`
 
 ### Route Protection
 
-- **Layout Guards**: `/app` routes protected by `+layout.server.ts` redirecting unauthenticated users
-- **Session Verification**: JWT tokens verified on each request via `hooks.server.ts`
+- **Layout Guards**: `/app` routes protected by `src/routes/app/+layout.server.ts` redirecting unauthenticated users
+- **Session Verification**: JWT tokens verified on each request via `src/hooks.server.ts`
+- **Permission Checks**: Page.server.ts files check specific permissions before loading
+
+### Client-side Operations
+
+- **Preferred Approach**: Use Remult repositories directly in Svelte components for CRUD operations
+- **No Server Actions**: Avoid `page.server.ts` for data operations when possible
+- **Reactive Data**: Use Svelte 5 runes ($state, $effect) for reactive state management
+- **Error Handling**: Handle errors directly in components with try/catch
 
 ## Developer Workflows
 
@@ -44,19 +57,21 @@ This is a **SvelteKit + Remult** fullstack application with:
 1. Create entity model in `src/shared/[entity]/[entity].model.ts`
 2. Add to `src/shared/entities.ts` array
 3. Entity automatically gets CRUD endpoints at `/api/[entity]`
+4. Create client-side pages using `remult.repo(Entity)` for operations
 
 ### Managing Permissions
 
-1. Define screen permissions in `src/lib/types/permissoes.ts`
+1. Define screen permissions in `src/lib/types/permissoes.ts` (METADADOS_TELAS)
 2. Create `PermissaoUsuario` records linking users to specific screen-rule combinations
-3. Use `criarObjetoPermissoes()` utility to convert DB format to client-usable structure
+3. Use `desserializarPermissoesDoDB()` to convert DB format to client-usable structure
+4. Check permissions in components: `user.permissions.screen.action.temPermissao`
 
 ### Authentication Implementation
 
 ```typescript
-// Server actions handle login/logout
-// JWT tokens created with user data + 24h expiration
+// Server-side: JWT tokens created with user data + 24h expiration
 // Cookies configured with httpOnly + secure flags for production
+// Permissions loaded via relations and deserialized in createSessionToken()
 ```
 
 ### Route Generation
@@ -86,22 +101,29 @@ export class MyEntity {
 ### Permission Checks
 
 ```typescript
-// Use nested permission object structure
-if (user.permissions.screen.action.temPermissao) {
+// In components, after loading user permissions
+if (locals.permissoesCompletas?.screen?.action?.temPermissao) {
   // Allow action
 }
 ```
 
-### Form Actions
+### Client-side CRUD
 
 ```typescript
-// SvelteKit form actions for data operations
-export const actions: Actions = {
-  save: async ({ request }) => {
-    const data = await request.formData();
-    // Process form data
-  },
-};
+// In Svelte components
+import { remult, repo } from "remult";
+
+let items = $state([]);
+const repoEntity = remult.repo(Entity);
+
+$effect(() => {
+  // Load data reactively
+  repoEntity.find().then((result) => (items = result));
+});
+
+async function saveItem(item) {
+  await repoEntity.save(item);
+}
 ```
 
 ### Path Aliases
@@ -116,6 +138,8 @@ npm run dev      # Start development server
 npm run build    # Production build
 npm run preview  # Preview production build
 npm run check    # TypeScript + Svelte checks
+npm run test     # Run tests
+npm run test:ui  # Run tests with UI
 ```
 
 ## Environment Setup
@@ -123,22 +147,17 @@ npm run check    # TypeScript + Svelte checks
 Required environment variables in `.env`:
 
 - `AUTH_SECRET`: JWT signing secret (generate UUID)
-- `BETTER_AUTH_SECRET`: Better Auth secret
-- `GITHUB_CLIENT_ID/SECRET`: OAuth credentials (if using GitHub auth)
 
 ## Database Migration
 
-Currently uses JSON files in `db/` directory. Replace with SQL database by:
-
-1. Update Remult data provider in `src/server/api.ts`
-2. Run migrations for schema changes
-3. Update connection strings in environment
+Currently uses SQLite database (`mydb.sqlite`). Schema changes are handled automatically by Remult entity definitions.
 
 ## Testing
 
-- **Framework**: Vitest configured but no tests implemented yet
-- **Location**: Tests should go in `tests/unit/` directory
+- **Framework**: Vitest configured with test setup
+- **Location**: Tests in `src/tests/unit/` directory
 - **Coverage**: Focus on entity business logic and permission utilities
+- **Setup**: Uses `src/test-setup.ts` for configuration
 
 ## Common Patterns
 
@@ -151,21 +170,52 @@ const user = await repo(Usuario).insert({
   senha: await bcrypt.hash("password", 10),
   cargos: ["role"],
 });
-// Create permission records separately
+// Permissions created separately via PermissaoUsuario inserts
 ```
 
-### Category Path Building
+### Permission Deserialization
 
 ```typescript
-// Use atualizarCaminho() utility for hierarchical category paths
-await atualizarCaminho(categoryId);
+// Convert DB array to nested object
+const permissoesCompletas = desserializarPermissoesDoDB(user.permissoes);
 ```
 
-### Error Handling
+### Reactive Data Loading
 
-````typescript
-// Use SvelteKit's fail() for form validation errors
-return fail(400, { field, error: "Validation message" });
-```</content>
+```typescript
+// In Svelte components
+let data = $state([]);
+let loading = $state(true);
+
+$effect(() => {
+  repo.find().then((result) => {
+    data = result;
+    loading = false;
+  });
+});
+```
+
+### Error Handling in Components
+
+```typescript
+try {
+  await repo.save(item);
+} catch (err) {
+  error = err.message;
+}
+```
+
+## Notes
+
+- **Client-side Preference**: Prefer client-side operations with Remult repositories in components over server actions
+- **No SEO Focus**: Application is behind login, so SEO optimization is not prioritized
+- **Permission Controller**: Use `PermissionsController.salvarPermissoesDoUsuario()` for bulk permission updates
+- **Entity Relations**: Permissions loaded via `Relations.toMany(() => PermissaoUsuario)` on Usuario model
+
+---
+
 <parameter name="filePath">c:\Users\Alan\Projetos Web\sistemaphp-sveltekit-remult\.github\copilot-instructions.md
-````
+
+```
+
+```
