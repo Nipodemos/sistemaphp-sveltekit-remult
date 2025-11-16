@@ -21,6 +21,7 @@ import { Estoque } from "./estoque/estoque.model";
 import { Test } from "./teste/teste.model";
 import { ProdutoGrade } from "./produto_grade/produto_grade.model";
 import { VariacaoValor } from "./variacao_valor/variacao_valor.model";
+import { Tela } from "./tela/tela.model";
 
 // 📝 Array centralizado de todas as entidades do sistema
 // Adicione novas entidades aqui e elas serão automaticamente registradas
@@ -34,7 +35,7 @@ export const entities: ClassType<any>[] = [
   Estoque,
   ProdutoGrade,
   VariacaoValor,
-  Test,
+  Tela,
 ];
 
 // Função helper para obter a lista de entidades (opcional, para melhor tipagem)
