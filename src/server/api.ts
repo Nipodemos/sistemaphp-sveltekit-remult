@@ -69,7 +69,7 @@ export const api = remultApi({
   },
 
   getUser: async (event): Promise<UserInfo | undefined> => {
-    if (!event.locals.usuario) {
+    if (!event.locals.usuario || !event.locals.permissoesCompletas) {
       // console.log("🔍 Nenhum usuário em locals");
       return undefined;
     }
@@ -78,6 +78,7 @@ export const api = remultApi({
       id: event.locals.usuario.id,
       name: event.locals.usuario.nome,
       roles: event.locals.usuario.cargos,
+      permissoesCompletas: event.locals.permissoesCompletas,
     };
   },
 });

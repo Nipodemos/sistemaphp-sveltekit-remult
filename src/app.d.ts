@@ -18,9 +18,9 @@ declare global {
 }
 
 declare module "remult" {
-  // interface UserInfo {
-  //   phone: string;
-  // }
+  interface UserInfo {
+    permissoesCompletas: PermissoesCompletas;
+  }
   // interface FieldOptions<entityType, valueType> {
   //   placeholder?: string;
   // }
