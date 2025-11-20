@@ -1,7 +1,7 @@
 import { remult } from "remult";
 import type { LayoutLoad } from "./$types";
 
-export const load = (async (event) => {
+export const load = ((event) => {
   // Criar um fetch customizado que sempre inclui credenciais
   const customFetch = (input: RequestInfo | URL, init?: RequestInit) => {
     return event.fetch(input, {
@@ -11,5 +11,5 @@ export const load = (async (event) => {
   };
 
   remult.useFetch(customFetch);
-  return { usuario: event.data.usuario };
+  return { user: event.data.user };
 }) satisfies LayoutLoad;

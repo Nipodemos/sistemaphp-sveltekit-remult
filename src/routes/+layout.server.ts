@@ -1,7 +1,8 @@
 import { redirect } from "@sveltejs/kit";
 import type { LayoutServerLoad } from "./$types";
+import { remult } from "remult";
 
-export const load = (async ({ locals, url }) => {
+export const load = (({ locals, url }) => {
   // O hook (hooks.server.ts) já tentou popular `locals.usuario`.
   // Se o usuário não estiver logado, `locals.usuario` será `null`.
 
@@ -12,5 +13,5 @@ export const load = (async ({ locals, url }) => {
   } else if (url.pathname === "/") {
     throw redirect(303, `/app`);
   }
-  return { usuario: locals.usuario };
+  return { user: remult.user };
 }) satisfies LayoutServerLoad;
