@@ -180,6 +180,19 @@ export const METADADOS_TELAS = {
       },
     ],
   },
+  telas: {
+    nome: "Gerenciamento de Telas",
+    permissoes: [
+      {
+        chave: "visualizar",
+        descricao: "Consultar telas",
+      },
+      {
+        chave: "editar",
+        descricao: "Editar tela existente",
+      },
+    ],
+  }
 } as const; // 'as const' para inferência literal forte
 
 // Tipos derivados automaticamente (sem duplicação!)
