@@ -21,6 +21,9 @@ const PAGES = {
   "/app/produtos": `/app/produtos`,
   "/app/produtos/criar_editar": `/app/produtos/criar_editar`,
   "/app/telas": `/app/telas`,
+  "/app/telas/gerenciar-[id]": (params: { id: (string | number) }) => {
+    return `/app/telas/gerenciar-${params['id']}`
+  },
   "/app/usuarios": `/app/usuarios`,
   "/app/usuarios/gerenciar-[id]": (params: { id: (string | number) }) => {
     return `/app/usuarios/gerenciar-${params['id']}`
@@ -161,7 +164,7 @@ export function route<T extends keyof AllTypes>(key: T, ...params: any[]): strin
 * ```
 */
 export type KIT_ROUTES = {
-  PAGES: { '/app': never, '/app/categorias': never, '/app/categorias/criar_editar': never, '/app/fornecedores': never, '/app/fornecedores/criar_editar': never, '/app/permissoes_telas': never, '/app/permissoes_telas/editar/[tela]': 'tela', '/app/produtos': never, '/app/produtos/criar_editar': never, '/app/telas': never, '/app/usuarios': never, '/app/usuarios/gerenciar-[id]': 'id', '/login': never }
+  PAGES: { '/app': never, '/app/categorias': never, '/app/categorias/criar_editar': never, '/app/fornecedores': never, '/app/fornecedores/criar_editar': never, '/app/permissoes_telas': never, '/app/permissoes_telas/editar/[tela]': 'tela', '/app/produtos': never, '/app/produtos/criar_editar': never, '/app/telas': never, '/app/telas/gerenciar-[id]': 'id', '/app/usuarios': never, '/app/usuarios/gerenciar-[id]': 'id', '/login': never }
   SERVERS: Record<string, never>
   ACTIONS: { 'logout /app': never, 'salvar /app/permissoes_telas/editar/[tela]': 'tela', 'save /app/usuarios/gerenciar-[id]': 'id', 'default /login': never }
   LINKS: Record<string, never>
