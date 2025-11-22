@@ -13,8 +13,9 @@ export function createSessionToken(usuarioQuerendoLogar: Usuario): string {
   const permissoesArray = usuarioQuerendoLogar.permissoes ?? [];
 
   // Desserializar para o formato completo usado pelo cliente
+  // Passa os cargos do usuário para verificar se é admin
   const permissoesCompletas: PermissoesCompletas =
-    desserializarPermissoesDoDB(permissoesArray);
+    desserializarPermissoesDoDB(permissoesArray, usuarioQuerendoLogar.cargos);
 
   const payload: App.Locals = {
     usuario: repo(Usuario).toJson(usuarioQuerendoLogar),
