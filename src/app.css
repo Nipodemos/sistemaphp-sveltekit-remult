@@ -1,7 +1,10 @@
 @import 'tailwindcss';
 
-@import '@skeletonlabs/skeleton'; /* [!code ++] */
-@import '@skeletonlabs/skeleton-svelte'; /* [!code ++] */
-@import '@skeletonlabs/skeleton/themes/cerberus';
+@import '@skeletonlabs/skeleton';
+/* [!code ++] */
+@import '@skeletonlabs/skeleton-svelte';
+/* [!code ++] */
+@import '@skeletonlabs/skeleton/themes/crimson';
 @plugin '@tailwindcss/forms';
-@plugin '@tailwindcss/typography'; /* [!code ++] */
+@plugin '@tailwindcss/typography';
+/* [!code ++] */
