@@ -24,6 +24,9 @@ export class Tela {
   })
   caminhoUrl!: string;
 
+  @Fields.string()
+  permissao?: string;
+
   @Fields.createdAt()
   criadoEm?: Date;
 
