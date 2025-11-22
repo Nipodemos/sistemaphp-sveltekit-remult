@@ -42,20 +42,38 @@ export const api = remultApi({
         nome: "Categorias",
         categoria: "Produtos",
         caminhoUrl: "/app/categorias",
+        permissao: "categorias.visualizar",
       },
       {
         nome: "Fornecedores",
         categoria: "Produtos",
         caminhoUrl: "/app/fornecedores",
+        permissao: "fornecedor.visualizar",
       },
       {
         nome: "Permissões de Telas",
         categoria: "Sistema",
         caminhoUrl: "/app/permissoes_telas",
+        permissao: "permissoes.visualizar",
       },
-      { nome: "Produtos", categoria: "Produtos", caminhoUrl: "/app/produtos" },
-      { nome: "Telas", categoria: "Sistema", caminhoUrl: "/app/telas" },
-      { nome: "Usuários", categoria: "Sistema", caminhoUrl: "/app/usuarios" },
+      {
+        nome: "Produtos",
+        categoria: "Produtos",
+        caminhoUrl: "/app/produtos",
+        permissao: "produtos.visualizar", // Assumindo que produtos faz parte de estoque
+      },
+      {
+        nome: "Telas",
+        categoria: "Sistema",
+        caminhoUrl: "/app/telas",
+        permissao: "telas.visualizar",
+      },
+      {
+        nome: "Usuários",
+        categoria: "Sistema",
+        caminhoUrl: "/app/usuarios",
+        permissao: "usuarios.visualizar", // TODO: Criar permissão especifica para usuários se não houver
+      },
     ];
 
     for (const tela of telasParaInserir) {
@@ -64,6 +82,12 @@ export const api = remultApi({
       });
       if (!existente) {
         await repoTela.insert(tela);
+      } else {
+        // Se já existe, atualiza APENAS a permissão, mantendo nome e categoria originais
+        if (existente.permissao !== tela.permissao) {
+          existente.permissao = tela.permissao;
+          await repoTela.save(existente);
+        }
       }
     }
   },
