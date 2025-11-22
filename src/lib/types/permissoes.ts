@@ -180,6 +180,90 @@ export const METADADOS_TELAS = {
       },
     ],
   },
+  categorias: {
+    nome: "Gerenciamento de Categorias",
+    permissoes: [
+      {
+        chave: "visualizar",
+        descricao: "Consultar categorias",
+      },
+      {
+        chave: "criar",
+        descricao: "Inserir nova categoria",
+      },
+      {
+        chave: "editar",
+        descricao: "Editar categoria existente",
+      },
+      {
+        chave: "excluir",
+        descricao: "Excluir categoria",
+      },
+    ],
+  },
+  usuarios: {
+    nome: "Gerenciamento de Usuários",
+    permissoes: [
+      {
+        chave: "visualizar",
+        descricao: "Consultar usuários",
+      },
+      {
+        chave: "criar",
+        descricao: "Inserir novo usuário",
+      },
+      {
+        chave: "editar",
+        descricao: "Editar usuário existente",
+      },
+      {
+        chave: "excluir",
+        descricao: "Excluir usuário",
+      },
+    ],
+  },
+  permissoes: {
+    nome: "Gerenciamento de Permissões",
+    permissoes: [
+      {
+        chave: "visualizar",
+        descricao: "Consultar permissões",
+      },
+      {
+        chave: "criar",
+        descricao: "Inserir nova permissão",
+      },
+      {
+        chave: "editar",
+        descricao: "Editar permissão existente",
+      },
+      {
+        chave: "excluir",
+        descricao: "Excluir permissão",
+      },
+    ],
+  },
+  produtos: {
+    nome: "Gerenciamento de Produtos",
+    permissoes: [
+      {
+        chave: "visualizar",
+        descricao: "Consultar produtos",
+      },
+      {
+        chave: "criar",
+        descricao: "Inserir novo produto",
+      },
+      {
+        chave: "editar",
+        descricao: "Editar produto existente",
+      },
+      {
+        chave: "excluir",
+        descricao: "Excluir produto",
+      },
+    ],
+  },
   telas: {
     nome: "Gerenciamento de Telas",
     permissoes: [
@@ -221,19 +305,47 @@ export type PermissoesCompletas = {
 
 // Funções utilitárias para trabalhar com permissões
 
+// Type guards para verificação segura
+function isTela(key: string): key is Tela {
+  return key in METADADOS_TELAS;
+}
+
+function isValidKey<T extends object>(obj: T, key: PropertyKey): key is keyof T {
+  return key in obj;
+}
+
 /**
  * Verifica se um usuário tem uma permissão específica.
- * @param permissoes - Objeto de permissões do usuário
+ * @param permissoes - Objeto de permissões do usuário (PermissoesDoUsuario ou PermissoesCompletas)
  * @param tela - Nome da tela (ex.: 'vendas')
  * @param chave - Chave da permissão (ex.: 'criar')
  * @returns true se o usuário tem a permissão, false caso contrário
  */
-export const hasPermission = <T extends Tela>(
-  permissoes: PermissoesDoUsuario,
-  tela: T,
-  chave: keyof PermissoesPorTela<T>
+export const verificarPermissao = (
+  permissoes: PermissoesDoUsuario | PermissoesCompletas | null | undefined,
+  tela: string,
+  chave: string
 ): boolean => {
-  return permissoes[tela]?.[chave] ?? false;
+  if (!permissoes) return false;
+  if (!isTela(tela)) return false;
+
+  const permissoesTela = permissoes[tela];
+  if (!permissoesTela) return false;
+  if (!isValidKey(permissoesTela, chave)) return false;
+
+  const valor = permissoesTela[chave];
+
+  // Verifica se é PermissoesCompletas (tem metadados)
+  if (typeof valor === "object" && valor !== null && "temPermissao" in valor) {
+    return valor.temPermissao;
+  }
+
+  // Assume PermissoesDoUsuario (booleans diretos)
+  if (typeof valor === "boolean") {
+    return valor;
+  }
+
+  return false;
 };
 
 /**
@@ -279,10 +391,10 @@ export const serializarParaDB = (
       resultado.push({
         tela,
         chave,
-        permitido: hasPermission(
+        permitido: verificarPermissao(
           permissoes,
           tela,
-          chave as keyof PermissoesPorTela<typeof tela>
+          chave
         ),
       });
     });
@@ -293,29 +405,40 @@ export const serializarParaDB = (
 /**
  * Desserializa permissões do banco de dados para objeto completo com descrições (oposto de serializarParaDB).
  * @param permissoesUsuarios - Array de permissões do usuário do DB (opcional)
+ * @param cargos - Array de cargos do usuário (opcional). Se incluir "admin", todas as permissões serão true
  * @returns Objeto de permissões completas com descrições e status
  */
 export const desserializarPermissoesDoDB = (
-  permissoesUsuarios: PermissaoUsuario[]
+  permissoesUsuarios: PermissaoUsuario[],
+  cargos?: string[]
 ): PermissoesCompletas => {
   const resultado = {} as PermissoesCompletas;
+  
+  // Verifica se o usuário é admin
+  const isAdmin = cargos?.includes("admin") ?? false;
 
-  // Inicializar todas as permissões como false
+  // Inicializar todas as permissões
   (Object.keys(METADADOS_TELAS) as Tela[]).forEach((tela) => {
     (resultado as any)[tela] = {};
     METADADOS_TELAS[tela].permissoes.forEach(({ chave, descricao }) => {
       (resultado as any)[tela][chave] = {
         descricao,
-        temPermissao: false,
+        // Se for admin, todas as permissões são true
+        temPermissao: isAdmin,
       };
     });
   });
+
+  // Se for admin, não precisa processar permissões do banco
+  if (isAdmin) {
+    return resultado;
+  }
 
   if (!permissoesUsuarios) {
     return resultado;
   }
 
-  // Marcar as permissões ativas como true
+  // Marcar as permissões ativas como true (apenas para não-admins)
   permissoesUsuarios.forEach((permissao) => {
     const tela = permissao.tela;
     const regra = permissao.regra;
