@@ -1,6 +1,7 @@
 <script lang="ts">
   import { remult } from "remult";
   import { Tela } from "$shared/tela/tela.model";
+  import { verificarPermissao } from "$lib/types/permissoes";
   import { Accordion } from "@skeletonlabs/skeleton-svelte";
 
   let telas = $state<Tela[]>([]);
@@ -9,6 +10,15 @@
   let telasAgrupadas = $derived(() => {
     const map = new Map<string, Tela[]>();
     for (const tela of telas) {
+      if (tela.permissao) {
+        const [entidade, regra] = tela.permissao.split(".");
+        if (
+          !verificarPermissao(remult.user?.permissoesCompletas, entidade, regra)
+        ) {
+          continue;
+        }
+      }
+
       if (!map.has(tela.categoria)) {
         map.set(tela.categoria, []);
       }
