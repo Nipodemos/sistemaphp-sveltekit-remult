@@ -49,7 +49,7 @@
   async function excluirFornecedor(fornecedor: Fornecedor) {
     if (
       !confirm(
-        `Tem certeza que deseja excluir o fornecedor "${fornecedor.razaoSocial}"?`
+        `Tem certeza que deseja excluir o fornecedor "${fornecedor.razaoSocial}"?`,
       )
     ) {
       return;
@@ -61,7 +61,7 @@
     } catch (err) {
       alert(
         "Erro ao excluir fornecedor: " +
-          (err instanceof Error ? err.message : String(err))
+          (err instanceof Error ? err.message : String(err)),
       );
     }
   }
@@ -74,7 +74,7 @@
     } else if (tipo === "CNPJ" && limpo.length === 14) {
       return limpo.replace(
         /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-        "$1.$2.$3/$4-$5"
+        "$1.$2.$3/$4-$5",
       );
     }
     return documento;
@@ -108,7 +108,7 @@
   <h1>Listagem de Fornecedores</h1>
 
   <div>
-    <a href="/app/fornecedores/criar_editar">
+    <a href="/app/fornecedores/gerenciar-novo">
       <button>Novo Fornecedor</button>
     </a>
   </div>
@@ -156,7 +156,7 @@
               <td
                 >{formatarDocumento(
                   fornecedor.documento,
-                  fornecedor.tipoDocumento
+                  fornecedor.tipoDocumento,
                 )}</td
               >
               <td>{fornecedor.cidade}</td>
@@ -164,9 +164,7 @@
               <td>{fornecedor.email}</td>
               <td>{fornecedor.representanteNome}</td>
               <td>
-                <a href="/app/fornecedores/criar_editar?id={fornecedor.id}"
-                  >Editar</a
-                >
+                <a href="/app/fornecedores/gerenciar-{fornecedor.id}">Editar</a>
                 <button onclick={() => excluirFornecedor(fornecedor)}
                   >Excluir</button
                 >
@@ -187,7 +185,7 @@
 
       {#if fornecedores.length === 0}
         <p>Nenhum fornecedor encontrado.</p>
-        <a href="/app/fornecedores/criar_editar">Criar primeiro fornecedor</a>
+        <a href="/app/fornecedores/gerenciar-novo">Criar primeiro fornecedor</a>
       {/if}
     </div>
   {/if}
