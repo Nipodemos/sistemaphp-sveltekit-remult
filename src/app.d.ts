@@ -9,7 +9,7 @@ declare global {
     // interface Error {}
     interface Locals {
       usuario: Usuario | null;
-      permissoesCompletas: PermissoesCompletas | null;
+      permissoesCompletas: PermissoesCompletas;
     }
     // interface PageData {}
     // interface PageState {}
