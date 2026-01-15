@@ -414,9 +414,11 @@ export const desserializarPermissoesDoDB = (
 ): PermissoesCompletas => {
   const resultado = {} as PermissoesCompletas;
   
-  // Verifica se o usuário é admin
-  const isAdmin = cargos?.includes("admin") ?? false;
+  console.log(cargos);
 
+  // Verifica se o usuário é admin
+  const isAdmin = cargos?.includes("administrador") ?? false;
+  console.log(isAdmin);
   // Inicializar todas as permissões
   (Object.keys(METADADOS_TELAS) as Tela[]).forEach((tela) => {
     (resultado as any)[tela] = {};
