@@ -10,13 +10,14 @@ import { remult } from "remult";
     if (categoria.nivel < 1 || categoria.nivel > 3) {
       throw new Error("Nível deve ser 1, 2 ou 3");
     }
+    
+    let categoriaPai = await e.relations.categoriaPai.findOne({include: {categoriaPai: true}})
+    if (categoria.nivel > 1) {
+      if (!categoriaPai) {
+        throw new Error("Categoria pai é obrigatória para níveis 2 e 3");
+      }
+    }
 
-    if (categoria.nivel > 1 && !categoria.categoriaPai) {
-      throw new Error("Categoria pai é obrigatória para níveis 2 e 3");
-    }
-    if (categoria.nivel === 1 && categoria.categoriaPai) {
-      throw new Error("Categoria pai deve ser nula para nível 1");
-    }
 
     if (!e.isNew) {
       const categoriaOriginal = await repo.findId(categoria.id);
@@ -30,9 +31,7 @@ import { remult } from "remult";
 
     // Calcular caminho e caminhoIds
     if (categoria.nivel === 3) {
-      const categoriaNivel2 = await repo.findId(categoria.categoriaPai!.id, {
-        include: { categoriaPai: true },
-      });
+      const categoriaNivel2 = categoriaPai;
       if (!categoriaNivel2) {
         throw new Error("Categoria pai de nível 2 não encontrada");
       }
@@ -58,7 +57,7 @@ import { remult } from "remult";
       categoria.caminho = `${categoriaNivel1.nome} => ${categoriaNivel2.nome} => ${categoria.nome}`;
       categoria.caminhoIds = `${categoriaNivel1.id},${categoriaNivel2.id},${categoria.id}`;
     } else if (categoria.nivel === 2) {
-      const categoriaNivel1 = await repo.findId(categoria.categoriaPai!.id);
+      const categoriaNivel1 = categoriaPai;
       if (!categoriaNivel1) {
         throw new Error("Categoria pai de nível 1 não encontrada");
       }
