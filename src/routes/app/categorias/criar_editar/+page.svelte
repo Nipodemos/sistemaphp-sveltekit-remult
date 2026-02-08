@@ -1,25 +1,34 @@
 <script lang="ts">
   import { remult } from "remult";
   import { Categoria } from "$shared/categoria/categoria.model";
-  import { CategoriaController } from "$shared/categoria/categoria.controller";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
+  import {
+    Save,
+    ArrowLeft,
+    Layers,
+    Eraser,
+    Info,
+    CheckCircle,
+    AlertCircle,
+    ChevronRight,
+    Tag,
+    CircleAlert,
+    CircleCheck,
+  } from "@lucide/svelte";
+  import { Progress } from "@skeletonlabs/skeleton-svelte";
 
-  // Estados reativos para cada nível
+  // Estados do formulário
+  let nome = $state("");
+  let nivel = $state<number>(1);
   let nivel1Id = $state<string | null>(null);
   let nivel2Id = $state<string | null>(null);
-  let nivel3Id = $state<string | null>(null);
+  let ativo = $state(true);
 
-  // Nomes para criação de novas categorias
-  let novoNivel1 = $state("");
-  let novoNivel2 = $state("");
-  let novoNivel3 = $state("");
-
-  // Categorias existentes
+  // Listas para selects
   let categoriasNivel1 = $state<Categoria[]>([]);
   let categoriasNivel2 = $state<Categoria[]>([]);
-  let categoriasNivel3 = $state<Categoria[]>([]);
 
   // Estados da aplicação
   let carregando = $state(true);
@@ -34,108 +43,88 @@
   // Repositório
   const repoCategoria = remult.repo(Categoria);
 
-  // Carregar dados quando o componente for montado
+  // Carregar dados iniciais
   onMount(async () => {
-    // Verificar se tem ID nos query params (edição)
     const urlParams = new URLSearchParams(page.url.search);
-    const categoriaId = urlParams.get("id");
+    const id = urlParams.get("id");
 
-    if (categoriaId) {
+    await carregarListasIniciais();
+
+    if (id) {
       modoEdicao = true;
-      categoriaIdEdicao = categoriaId;
-      await carregarCategoriaParaEdicao(categoriaId);
+      categoriaIdEdicao = id;
+      await carregarCategoria(id);
+    } else {
+      carregando = false;
     }
-
-    await carregarCategorias();
   });
 
-  async function carregarCategorias() {
+  async function carregarListasIniciais() {
     try {
-      const todasCategorias = await repoCategoria.find();
-      categoriasNivel1 = todasCategorias.filter((c) => c.nivel === 1);
-      // As categorias de nível 2 e 3 serão carregadas conforme a seleção do nível 1 e 2
+      categoriasNivel1 = await repoCategoria.find({
+        where: { nivel: 1 },
+        orderBy: { nome: "asc" },
+      });
     } catch (err) {
       erro =
         "Erro ao carregar categorias: " +
+        (err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function carregarCategoria(id: string) {
+    try {
+      const cat = await repoCategoria.findId(id, {
+        include: { categoriaPai: true },
+      });
+      if (cat) {
+        nome = cat.nome;
+        nivel = cat.nivel;
+        ativo = cat.ativo;
+
+        if (cat.nivel === 2) {
+          nivel1Id = cat.categoriaPai?.id || null;
+        } else if (cat.nivel === 3) {
+          nivel2Id = cat.categoriaPai?.id || null;
+          // Buscar pai do nível 2 para achar o nível 1
+          if (cat.categoriaPai) {
+            const paiNivel2 = await repoCategoria.findId(cat.categoriaPai.id, {
+              include: { categoriaPai: true },
+            });
+            nivel1Id = paiNivel2?.categoriaPai?.id || null;
+            if (nivel1Id) await carregarCategoriasNivel2(nivel1Id);
+          }
+        }
+      } else {
+        erro = "Categoria não encontrada";
+      }
+    } catch (err) {
+      erro =
+        "Erro ao carregar dados: " +
         (err instanceof Error ? err.message : String(err));
     } finally {
       carregando = false;
     }
   }
 
-  async function carregarCategoriaParaEdicao(categoriaId: string) {
-    try {
-      const categoria = await repoCategoria.findId(categoriaId);
-      if (categoria) {
-        // Preencher os campos com os dados da categoria
-        if (categoria.nivel === 3 && categoria.categoriaPai?.id) {
-          nivel3Id = categoria.id;
-          nivel2Id = categoria.categoriaPai.id;
-
-          const nivel2 = await repoCategoria.findId(nivel2Id);
-          if (nivel2 && nivel2.categoriaPai?.id) {
-            nivel1Id = nivel2.categoriaPai.id;
-          }
-        } else if (categoria.nivel === 2 && categoria.categoriaPai?.id) {
-          nivel2Id = categoria.id;
-          nivel1Id = categoria.categoriaPai.id;
-        } else if (categoria.nivel === 1) {
-          nivel1Id = categoria.id;
-        }
-
-        // Carregar categorias filhas conforme necessário
-        await atualizarCategoriasNivel2();
-        await atualizarCategoriasNivel3();
-      } else {
-        erro = "Categoria não encontrada";
-      }
-    } catch (err) {
-      console.log("alan passou aqui 2");
-      erro =
-        "Erro ao carregar categoria: " +
-        (err instanceof Error ? err.message : String(err));
-    }
-  }
-
-  async function atualizarCategoriasNivel2() {
+  // Efeito para carregar Nível 2 quando Nível 1 muda
+  $effect(() => {
     if (nivel1Id) {
-      try {
-        const todasCategorias = await repoCategoria.find();
-        categoriasNivel2 = todasCategorias.filter(
-          (cat) => cat.categoriaPai?.id === nivel1Id && cat.nivel === 2
-        );
-      } catch (err) {
-        console.log("alan passou aqui 3");
-        erro =
-          "Erro ao carregar categorias de nível 2: " +
-          (err instanceof Error ? err.message : String(err));
-      }
+      carregarCategoriasNivel2(nivel1Id);
     } else {
       categoriasNivel2 = [];
     }
-    // Resetar nível 3 quando muda o nível 2
-    nivel2Id = null;
-    categoriasNivel3 = [];
-    nivel3Id = null;
-  }
+  });
 
-  async function atualizarCategoriasNivel3() {
-    if (nivel2Id) {
-      try {
-        const todasCategorias = await repoCategoria.find();
-        categoriasNivel3 = todasCategorias.filter(
-          (cat) => cat.categoriaPai?.id === nivel2Id && cat.nivel === 3
-        );
-      } catch (err) {
-        console.log("alan passou aqui 4");
-        erro =
-          "Erro ao carregar categorias de nível 3: " +
-          (err instanceof Error ? err.message : String(err));
-      }
-    } else {
-      categoriasNivel3 = [];
+  async function carregarCategoriasNivel2(parentId: string) {
+    try {
+      categoriasNivel2 = await repoCategoria.find({
+        where: { categoriaPai: { $id: parentId }, nivel: 2 },
+        orderBy: { nome: "asc" },
+      });
+    } catch (err) {
+      console.error(err);
     }
-    nivel3Id = null;
   }
 
   async function salvar() {
@@ -144,109 +133,48 @@
       erro = null;
       sucesso = null;
 
-      // Se estiver em modo de edição, verificar se a categoria existe
-      if (modoEdicao && categoriaIdEdicao) {
-        const categoriaExistente =
-          await repoCategoria.findId(categoriaIdEdicao);
-        if (!categoriaExistente) {
-          erro = "Categoria não encontrada";
-          return;
-        }
-      }
-
-      // Criar ou selecionar nível 1
-      let nivel1: Categoria;
-      if (nivel1Id) {
-        const nivel1Temp = await repoCategoria.findId(nivel1Id);
-        if (!nivel1Temp) {
-          erro = "Categoria de nível 1 não encontrada";
-          return;
-        }
-        nivel1 = nivel1Temp;
-      } else if (novoNivel1.trim()) {
-        // Criar nova categoria de nível 1
-        nivel1 = repoCategoria.create();
-        nivel1.nome = novoNivel1.trim();
-        nivel1.nivel = 1;
-        nivel1 = await repoCategoria.save(nivel1);
-        // Atualizar lista de categorias
-        categoriasNivel1 = [...categoriasNivel1, nivel1];
-      } else {
-        erro = "Selecione ou crie uma categoria de nível 1";
+      if (!nome.trim()) {
+        erro = "O nome da categoria é obrigatório";
         return;
       }
 
-      // Criar ou selecionar nível 2
-      let nivel2: Categoria | undefined;
-      if (nivel2Id) {
-        const nivel2Temp = await repoCategoria.findId(nivel2Id);
-        if (!nivel2Temp) {
-          erro = "Categoria de nível 2 não encontrada";
-          return;
-        }
-        nivel2 = nivel2Temp;
-      } else if (novoNivel2.trim()) {
-        // Criar nova categoria de nível 2
-        nivel2 = repoCategoria.create();
-        nivel2.nome = novoNivel2.trim();
-        nivel2.nivel = 2;
-        nivel2.categoriaPai = nivel1;
-        nivel2 = await repoCategoria.save(nivel2);
-        // Atualizar lista de categorias
-        categoriasNivel2 = [...categoriasNivel2, nivel2];
+      if (nivel === 2 && !nivel1Id) {
+        erro = "Selecione uma categoria pai (Nível 1)";
+        return;
       }
 
-      // Criar ou selecionar nível 3
-      let nivel3: Categoria | undefined;
-      if (nivel3Id) {
-        const nivel3Temp = await repoCategoria.findId(nivel3Id);
-        if (!nivel3Temp) {
-          erro = "Categoria de nível 3 não encontrada";
-          return;
-        }
-        nivel3 = nivel3Temp;
-      } else if (novoNivel3.trim()) {
-        // Verificar se nível 2 existe, se não, criar um "Geral"
-        if (!nivel2) {
-          // Criar categoria "Geral" de nível 2
-          nivel2 = repoCategoria.create();
-          nivel2.nome = "Geral";
-          nivel2.nivel = 2;
-          nivel2.categoriaPai = nivel1;
-          nivel2 = await repoCategoria.save(nivel2);
-          // Atualizar lista de categorias
-          categoriasNivel2 = [...categoriasNivel2, nivel2];
-        }
-
-        // Criar nova categoria de nível 3
-        nivel3 = repoCategoria.create();
-        nivel3.nome = novoNivel3.trim();
-        nivel3.nivel = 3;
-        nivel3.categoriaPai = nivel2;
-        nivel3 = await repoCategoria.save(nivel3);
+      if (nivel === 3 && !nivel2Id) {
+        erro = "Selecione uma categoria pai (Nível 2)";
+        return;
       }
 
-      // Se estiver em modo de edição, atualizar a categoria existente
+      let categoria: Categoria;
       if (modoEdicao && categoriaIdEdicao) {
-        // Determinar qual é a categoria que está sendo editada (a de nível mais baixo)
-        let categoriaEditada: Categoria;
-        if (nivel3) {
-          categoriaEditada = nivel3;
-        } else if (nivel2) {
-          categoriaEditada = nivel2;
-        } else {
-          categoriaEditada = nivel1;
-        }
-
-        sucesso = "Categoria atualizada com sucesso!";
+        categoria = (await repoCategoria.findId(categoriaIdEdicao))!;
       } else {
-        sucesso = "Categoria(s) criada(s) com sucesso!";
+        categoria = repoCategoria.create();
       }
 
-      // Voltar para a listagem após 1.5 segundos
-      setTimeout(() => {
-        goto("/app/categorias");
-      }, 1500);
+      categoria.nome = nome.trim();
+      categoria.nivel = nivel;
+      categoria.ativo = ativo;
+
+      if (nivel === 1) {
+        categoria.categoriaPai = undefined;
+      } else if (nivel === 2) {
+        categoria.categoriaPai = categoriasNivel1.find(
+          (c) => c.id === nivel1Id,
+        );
+      } else if (nivel === 3) {
+        categoria.categoriaPai = categoriasNivel2.find(
+          (c) => c.id === nivel2Id,
+        );
+      }
+
+      await repoCategoria.save(categoria);
+
+      sucesso = modoEdicao ? "Categoria atualizada!" : "Categoria criada!";
+      setTimeout(() => goto("/app/categorias"), 1500);
     } catch (err) {
       erro =
         "Erro ao salvar: " + (err instanceof Error ? err.message : String(err));
@@ -255,265 +183,346 @@
     }
   }
 
-  function limparNiveis() {
-    nivel1Id = null;
-    nivel2Id = null;
-    nivel3Id = null;
-    novoNivel1 = "";
-    novoNivel2 = "";
-    novoNivel3 = "";
-    categoriasNivel2 = [];
-    categoriasNivel3 = [];
+  function limparFormulario() {
+    if (!modoEdicao) {
+      nome = "";
+      nivel = 1;
+      nivel1Id = null;
+      nivel2Id = null;
+      ativo = true;
+    }
   }
+
+  const getBreadcrumb = $derived(() => {
+    let parts = [];
+    if (nivel1Id) {
+      const p1 = categoriasNivel1.find((c) => c.id === nivel1Id);
+      if (p1) parts.push(p1.nome);
+    }
+    if (nivel >= 3 && nivel2Id) {
+      const p2 = categoriasNivel2.find((c) => c.id === nivel2Id);
+      if (p2) parts.push(p2.nome);
+    }
+    if (nome) parts.push(nome);
+    return parts.join(" > ") || "Nova Categoria";
+  });
 </script>
 
-<div>
-  <h1>{modoEdicao ? "Editar Categoria" : "Nova Categoria"}</h1>
+<div class="space-y-6">
+  <!-- Header -->
+  <header class="flex items-center justify-between gap-4">
+    <div class="flex items-center space-x-3">
+      <button
+        onclick={() => goto("/app/categorias")}
+        class="btn-icon preset-tonal-surface hover:preset-filled-surface-200-800"
+        title="Voltar"
+      >
+        <ArrowLeft size={20} />
+      </button>
+      <div
+        class="h-10 w-10 rounded-lg bg-primary-500/10 flex items-center justify-center text-primary-500"
+      >
+        <Layers size={24} />
+      </div>
+      <div>
+        <h1 class="h3 font-bold">
+          {modoEdicao ? "Editar Categoria" : "Nova Categoria"}
+        </h1>
+        <p class="text-surface-600-400 text-xs">{getBreadcrumb()}</p>
+      </div>
+    </div>
+  </header>
 
   {#if erro}
-    <div class="error">
-      <strong>Erro:</strong>
-      {erro}
+    <div
+      class="alert preset-filled-error flex items-center gap-3 animate-in fade-in slide-in-from-top-4"
+    >
+      <CircleAlert size={20} />
+      <p>{erro}</p>
     </div>
   {/if}
 
   {#if sucesso}
-    <div class="success">
-      <strong>Sucesso:</strong>
-      {sucesso}
+    <div
+      class="alert preset-filled-success flex items-center gap-3 animate-in fade-in slide-in-from-top-4"
+    >
+      <CheckCircle size={20} />
+      <p>{sucesso}</p>
     </div>
   {/if}
 
   {#if carregando}
-    <p>Carregando...</p>
+    <div class="flex flex-col items-center justify-center py-24 space-y-6">
+      <Progress value={null} class="w-64">
+        <Progress.Track>
+          <Progress.Range
+            class="bg-primary-500 animate-[custom-animation_2s_ease-in-out_infinite]"
+          />
+        </Progress.Track>
+      </Progress>
+      <p class="text-surface-600-400 font-medium animate-pulse">
+        Carregando dados...
+      </p>
+    </div>
   {:else}
     <form
       onsubmit={(e) => {
         e.preventDefault();
         salvar();
       }}
+      class="space-y-6"
     >
-      <!-- Nível 1 -->
-      <div class="nivel-container">
-        <h2>Nível 1 (obrigatório)</h2>
-        <div>
-          <label for="nivel1">Selecione uma categoria existente:</label>
-          <select
-            id="nivel1"
-            bind:value={nivel1Id}
-            onchange={atualizarCategoriasNivel2}
-            disabled={salvando}
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Coluna da Esquerda: Hierarquia -->
+        <div class="lg:col-span-2 space-y-6">
+          <section
+            class="card preset-outlined-surface-200-800 bg-surface-50-950 overflow-hidden"
           >
-            <option value={null}>-- Selecione --</option>
-            {#each categoriasNivel1 as categoria}
-              <option value={categoria.id}>{categoria.nome}</option>
-            {/each}
-          </select>
-        </div>
-
-        <div>
-          <label for="novoNivel1">Ou crie uma nova:</label>
-          <input
-            type="text"
-            id="novoNivel1"
-            bind:value={novoNivel1}
-            disabled={salvando || !!nivel1Id}
-            placeholder="Nome da nova categoria"
-          />
-        </div>
-      </div>
-
-      <!-- Nível 2 -->
-      <div class="nivel-container">
-        <h2>Nível 2 (opcional)</h2>
-        {#if nivel1Id || novoNivel1}
-          <div>
-            <label for="nivel2">Selecione uma categoria existente:</label>
-            <select
-              id="nivel2"
-              bind:value={nivel2Id}
-              onchange={atualizarCategoriasNivel3}
-              disabled={salvando}
+            <header
+              class="bg-surface-100-900/10 p-4 border-b border-surface-200-800 flex items-center gap-2"
             >
-              <option value={null}>-- Selecione --</option>
-              {#each categoriasNivel2 as categoria}
-                <option value={categoria.id}>{categoria.nome}</option>
-              {/each}
-            </select>
-          </div>
+              <Info size={18} class="text-primary-500" />
+              <h2 class="font-bold text-sm uppercase tracking-wider">
+                Definição de Nível
+              </h2>
+            </header>
 
-          <div>
-            <label for="novoNivel2">Ou crie uma nova:</label>
-            <input
-              type="text"
-              id="novoNivel2"
-              bind:value={novoNivel2}
-              disabled={salvando || !!nivel2Id}
-              placeholder="Nome da nova categoria"
-            />
-          </div>
-        {:else}
-          <p>Selecione ou crie uma categoria de nível 1 primeiro</p>
-        {/if}
-      </div>
+            <div class="p-6 space-y-6">
+              <!-- Nível -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {#each [1, 2, 3] as n}
+                  <button
+                    type="button"
+                    class="btn border-2 transition-all flex flex-col items-center py-4 gap-2
+                      {nivel === n
+                      ? 'border-primary-500 bg-primary-500/10'
+                      : 'border-surface-200-800 hover:border-surface-400'}"
+                    disabled={modoEdicao}
+                    onclick={() => {
+                      nivel = n;
+                      nivel1Id = null;
+                      nivel2Id = null;
+                    }}
+                  >
+                    <span class="text-xs font-bold uppercase opacity-60"
+                      >Nível {n}</span
+                    >
+                    <span class="font-bold text-lg"
+                      >{n === 1 ? "Raiz" : n === 2 ? "Grupo" : "Detalhe"}</span
+                    >
+                    {#if nivel === n}
+                      <CircleCheck size={16} class="text-primary-500" />
+                    {/if}
+                  </button>
+                {/each}
+              </div>
 
-      <!-- Nível 3 -->
-      <div class="nivel-container">
-        <h2>Nível 3 (opcional)</h2>
-        {#if nivel1Id || novoNivel1}
-          <div>
-            <label for="nivel3">Selecione uma categoria existente:</label>
-            <select id="nivel3" bind:value={nivel3Id} disabled={salvando}>
-              <option value={null}>-- Selecione --</option>
-              {#each categoriasNivel3 as categoria}
-                <option value={categoria.id}>{categoria.nome}</option>
-              {/each}
-            </select>
-          </div>
+              {#if modoEdicao}
+                <p class="text-[10px] text-surface-500 italic">
+                  * O nível não pode ser alterado após a criação.
+                </p>
+              {/if}
 
-          <div>
-            <label for="novoNivel3">Ou crie uma nova:</label>
-            <input
-              type="text"
-              id="novoNivel3"
-              bind:value={novoNivel3}
-              disabled={salvando || !!nivel3Id}
-              placeholder="Nome da nova categoria"
-            />
-          </div>
+              <!-- Seleção de Pais Dinâmica -->
+              {#if nivel >= 2}
+                <div
+                  class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-left-4"
+                >
+                  <!-- Parent Nivel 1 -->
+                  <div>
+                    <label class="label">
+                      <span class="label-text">Categoria Pai (Nível 1)</span>
+                      <div class="input-group grid-cols-[auto_1fr]">
+                        <div class="ig-cell preset-tonal">
+                          <Layers size={16} />
+                        </div>
+                        <select
+                          bind:value={nivel1Id}
+                          class="ig-select"
+                          disabled={salvando || (modoEdicao && nivel === 2)}
+                        >
+                          <option value={null}>-- Selecione --</option>
+                          {#each categoriasNivel1 as cat}
+                            <option value={cat.id}>{cat.nome}</option>
+                          {/each}
+                        </select>
+                      </div>
+                    </label>
+                  </div>
 
-          {#if nivel2Id || novoNivel2 || nivel3Id || novoNivel3}
-            <div class="preview">
-              <h3>Visualização da Hierarquia</h3>
-              <p>
-                <strong>Caminho completo:</strong>
-                {nivel1Id
-                  ? categoriasNivel1.find((c) => c.id === nivel1Id)?.nome
-                  : novoNivel1}
-                {#if nivel2Id || novoNivel2}
-                  {" -> "}
-                  {nivel2Id
-                    ? categoriasNivel2.find((c) => c.id === nivel2Id)?.nome
-                    : novoNivel2 || "Geral"}
-                {/if}
-                {#if nivel3Id || novoNivel3}
-                  {" -> "}
-                  {nivel3Id
-                    ? categoriasNivel3.find((c) => c.id === nivel3Id)?.nome
-                    : novoNivel3}
-                {/if}
+                  <!-- Parent Nivel 2 (apenas se nivel for 3) -->
+                  {#if nivel === 3}
+                    <div class="animate-in slide-in-from-left-4">
+                      <label class="label">
+                        <span class="label-text"
+                          >Subcategoria Pai (Nível 2)</span
+                        >
+                        <div class="input-group grid-cols-[auto_1fr]">
+                          <div class="ig-cell preset-tonal">
+                            <Layers size={16} />
+                          </div>
+                          <select
+                            bind:value={nivel2Id}
+                            class="ig-select"
+                            disabled={salvando || !nivel1Id || modoEdicao}
+                          >
+                            <option value={null}
+                              >{nivel1Id
+                                ? "-- Selecione --"
+                                : "Selecione o Nível 1 primeiro"}</option
+                            >
+                            {#each categoriasNivel2 as cat}
+                              <option value={cat.id}>{cat.nome}</option>
+                            {/each}
+                          </select>
+                        </div>
+                      </label>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+          </section>
+
+          <section
+            class="card preset-outlined-surface-200-800 bg-surface-50-950 overflow-hidden"
+          >
+            <header
+              class="bg-surface-100-900/10 p-4 border-b border-surface-200-800 flex items-center gap-2"
+            >
+              <Tag size={18} class="text-primary-500" />
+              <h2 class="font-bold text-sm uppercase tracking-wider">
+                Identificação
+              </h2>
+            </header>
+
+            <div class="p-6">
+              <label class="label">
+                <span class="label-text">Nome da Categoria</span>
+                <div
+                  class="input-group grid-cols-[auto_1fr] divide-x divide-surface-200-800"
+                >
+                  <div class="ig-cell preset-tonal"><Tag size={16} /></div>
+                  <input
+                    type="text"
+                    class="ig-input"
+                    placeholder="Ex: Eletrônicos, Smartphones, Acessórios..."
+                    bind:value={nome}
+                    disabled={salvando}
+                    required
+                  />
+                </div>
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <!-- Coluna da Direita: Status e Info -->
+        <div class="space-y-6">
+          <section
+            class="card preset-outlined-surface-200-800 bg-surface-50-950 overflow-hidden"
+          >
+            <header
+              class="bg-surface-100-900/10 p-4 border-b border-surface-200-800 flex items-center gap-2"
+            >
+              <CheckCircle size={18} class="text-primary-500" />
+              <h2 class="font-bold text-sm uppercase tracking-wider">
+                Configurações
+              </h2>
+            </header>
+
+            <div class="p-6">
+              <label class="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  bind:checked={ativo}
+                  class="checkbox"
+                  disabled={salvando}
+                />
+                <span class="font-medium">Categoria Ativa</span>
+              </label>
+              <p class="text-xs text-surface-500 mt-2">
+                Inativar uma categoria oculta ela dos filtros de produtos.
               </p>
             </div>
-          {/if}
-        {:else}
-          <p>Selecione ou crie uma categoria de nível 1 primeiro</p>
-        {/if}
+          </section>
+
+          <div class="card p-6 preset-tonal-primary space-y-4">
+            <h3 class="font-bold flex items-center gap-2">
+              <Info size={18} />
+              Dica
+            </h3>
+            <p class="text-sm opacity-80">
+              Categorias de <strong>Nível 1</strong> são as grandes divisões da
+              loja.
+              <strong>Nível 2</strong> serve para agrupar e
+              <strong>Nível 3</strong> é para detalhamento máximo.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div class="actions">
-        <button type="submit" disabled={salvando}>
-          {salvando ? "Salvando..." : modoEdicao ? "Atualizar" : "Criar"}
-        </button>
-
-        <button type="button" onclick={limparNiveis} disabled={salvando}>
-          Limpar
+      <!-- Ações -->
+      <footer
+        class="flex flex-col sm:flex-row items-center justify-end gap-4 pb-12"
+      >
+        <button
+          type="button"
+          onclick={limparFormulario}
+          class="btn preset-tonal-surface w-full sm:w-auto flex items-center gap-2"
+          disabled={salvando || modoEdicao}
+        >
+          <Eraser size={18} />
+          <span>Limpar</span>
         </button>
 
         <button
           type="button"
           onclick={() => goto("/app/categorias")}
+          class="btn preset-tonal-surface hover:preset-tonal-error w-full sm:w-auto"
           disabled={salvando}
         >
           Cancelar
         </button>
-      </div>
+
+        <button
+          type="submit"
+          class="btn preset-filled-primary-500 w-full sm:w-auto flex items-center gap-2 min-w-[140px]"
+          disabled={salvando}
+        >
+          {#if salvando}
+            <div
+              class="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+            ></div>
+            <span>Salvando...</span>
+          {:else}
+            <Save size={18} />
+            <span>{modoEdicao ? "Atualizar" : "Salvar Categoria"}</span>
+          {/if}
+        </button>
+      </footer>
     </form>
   {/if}
 </div>
 
 <style>
-  .nivel-container {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 16px;
-    margin-bottom: 20px;
-    background-color: #f9f9f9;
-  }
-
-  .nivel-container h2 {
-    margin-top: 0;
-    color: #333;
-  }
-
-  .nivel-container > div {
-    margin-bottom: 12px;
-  }
-
-  label {
-    display: block;
-    margin-bottom: 4px;
-    font-weight: bold;
-  }
-
-  input,
-  select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-
-  .actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-  }
-
-  .actions button {
-    padding: 10px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-
-  .actions button[type="submit"] {
-    background-color: #007bff;
-    color: white;
-  }
-
-  .actions button[type="submit"]:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-
-  .actions button:not([type="submit"]) {
-    background-color: #6c757d;
-    color: white;
-  }
-
-  .preview {
-    margin-top: 16px;
-    padding: 12px;
-    background-color: #e9ecef;
-    border-radius: 4px;
-  }
-
-  .error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 16px;
-  }
-
-  .success {
-    color: #155724;
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 16px;
+  @keyframes -global-custom-animation {
+    from {
+      scale: 0.5 1;
+      transform: translateX(-200%);
+    }
+    25% {
+      transform: translateX(50%);
+    }
+    50% {
+      transform: translateX(-50%);
+    }
+    75% {
+      transform: translateX(150%);
+    }
+    to {
+      scale: 0.5 1;
+      transform: translateX(200%);
+    }
   }
 </style>

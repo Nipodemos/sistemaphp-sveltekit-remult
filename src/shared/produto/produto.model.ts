@@ -85,7 +85,9 @@ export class Produto {
   @Fields.literal(() => tipoVariacao)
   variacao3!: TypeTipoVariacao;
 
-  @Relations.toOne(() => Categoria)
+  @Relations.toOne(() => Categoria, {
+    validate: [Validators.required, Validators.relationExists],
+  })
   categoria!: Categoria;
 
   @Fields.createdAt()

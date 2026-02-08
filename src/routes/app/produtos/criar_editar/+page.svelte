@@ -29,6 +29,9 @@
   let precoCusto = $state(0);
   let precoVenda = $state(0);
   let unidadeMedida = $state<"UN" | "KG" | "LT" | "M">("UN");
+  let nivel1Id = $state<string | null>(null);
+  let nivel2Id = $state<string | null>(null);
+  let nivel3Id = $state<string | null>(null);
   let categoriaId = $state<string | null>(null);
   let fornecedorId = $state<string | null>(null);
   let variacao1 = $state<string>("");
@@ -48,6 +51,15 @@
   // Listas para selects
   let categorias = $state<Categoria[]>([]);
   let fornecedores = $state<Fornecedor[]>([]);
+
+  // Categorias filtradas por nível
+  let categoriasNivel1 = $derived(categorias.filter((c) => c.nivel === 1));
+  let categoriasNivel2 = $derived(
+    categorias.filter((c) => c.nivel === 2 && c.categoriaPai?.id === nivel1Id),
+  );
+  let categoriasNivel3 = $derived(
+    categorias.filter((c) => c.nivel === 3 && c.categoriaPai?.id === nivel2Id),
+  );
 
   // Repositórios
   const repoProduto = remult.repo(Produto);
@@ -94,7 +106,13 @@
         precoCusto = produto.precoCusto;
         precoVenda = produto.precoVenda;
         unidadeMedida = produto.unidadeMedida;
-        categoriaId = produto.categoria?.id || null;
+        if (produto.categoria) {
+          categoriaId = produto.categoria.id;
+          const ids = produto.categoria.caminhoIds?.split(",") || [];
+          nivel1Id = ids[0] || null;
+          nivel2Id = ids[1] || null;
+          nivel3Id = ids[2] || null;
+        }
         fornecedorId = produto.fornecedor?.id || null;
         variacao1 = produto.variacao1 || "";
         variacao2 = produto.variacao2 || "";
@@ -123,6 +141,12 @@
 
       if (!fornecedorId) {
         erro = "O fornecedor é obrigatório";
+        return;
+      }
+
+      const finalCategoriaId = nivel3Id || nivel2Id || nivel1Id;
+      if (!finalCategoriaId) {
+        erro = "A categoria é obrigatória";
         return;
       }
 
@@ -158,13 +182,11 @@
       produto.variacao2 = (variacao2 as any) || undefined;
       produto.variacao3 = (variacao3 as any) || undefined;
 
-      if (categoriaId) {
-        const categoria = await repoCategoria.findId(categoriaId);
+      if (finalCategoriaId) {
+        const categoria = await repoCategoria.findId(finalCategoriaId);
         if (categoria) {
           produto.categoria = categoria;
         }
-      } else {
-        (produto as any).categoria = null;
       }
 
       if (fornecedorId) {
@@ -198,6 +220,9 @@
     precoCusto = 0;
     precoVenda = 0;
     unidadeMedida = "UN";
+    nivel1Id = null;
+    nivel2Id = null;
+    nivel3Id = null;
     categoriaId = null;
     fornecedorId = null;
     variacao1 = "";
@@ -408,23 +433,84 @@
           </header>
 
           <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div>
-              <label class="label">
-                <span class="label-text">Categoria</span>
-                <div class="input-group grid-cols-[auto_1fr]">
-                  <div class="ig-cell preset-tonal"><Layers size={16} /></div>
-                  <select
-                    bind:value={categoriaId}
-                    class="ig-select"
-                    disabled={salvando}
-                  >
-                    <option value={null}>-- Selecione --</option>
-                    {#each categorias as categoria}
-                      <option value={categoria.id}>{categoria.caminho}</option>
-                    {/each}
-                  </select>
+            <div class="sm:col-span-2 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Nível 1 -->
+                <div>
+                  <label class="label">
+                    <span class="label-text">Categoria Nível 1</span>
+                    <div class="input-group grid-cols-[auto_1fr]">
+                      <div class="ig-cell preset-tonal">
+                        <Layers size={16} />
+                      </div>
+                      <select
+                        bind:value={nivel1Id}
+                        onchange={() => {
+                          nivel2Id = null;
+                          nivel3Id = null;
+                        }}
+                        class="ig-select"
+                        disabled={salvando}
+                        required
+                      >
+                        <option value={null}>-- Selecione --</option>
+                        {#each categoriasNivel1 as cat}
+                          <option value={cat.id}>{cat.nome}</option>
+                        {/each}
+                      </select>
+                    </div>
+                  </label>
                 </div>
-              </label>
+
+                <!-- Nível 2 -->
+                {#if nivel1Id && categoriasNivel2.length > 0}
+                  <div class="animate-in fade-in slide-in-from-left-4">
+                    <label class="label">
+                      <span class="label-text">Categoria Nível 2</span>
+                      <div class="input-group grid-cols-[auto_1fr]">
+                        <div class="ig-cell preset-tonal">
+                          <Layers size={16} />
+                        </div>
+                        <select
+                          bind:value={nivel2Id}
+                          onchange={() => (nivel3Id = null)}
+                          class="ig-select"
+                          disabled={salvando}
+                        >
+                          <option value={null}>-- Selecione --</option>
+                          {#each categoriasNivel2 as cat}
+                            <option value={cat.id}>{cat.nome}</option>
+                          {/each}
+                        </select>
+                      </div>
+                    </label>
+                  </div>
+                {/if}
+
+                <!-- Nível 3 -->
+                {#if nivel2Id && categoriasNivel3.length > 0}
+                  <div class="animate-in fade-in slide-in-from-left-4">
+                    <label class="label">
+                      <span class="label-text">Categoria Nível 3</span>
+                      <div class="input-group grid-cols-[auto_1fr]">
+                        <div class="ig-cell preset-tonal">
+                          <Layers size={16} />
+                        </div>
+                        <select
+                          bind:value={nivel3Id}
+                          class="ig-select"
+                          disabled={salvando}
+                        >
+                          <option value={null}>-- Selecione --</option>
+                          {#each categoriasNivel3 as cat}
+                            <option value={cat.id}>{cat.nome}</option>
+                          {/each}
+                        </select>
+                      </div>
+                    </label>
+                  </div>
+                {/if}
+              </div>
             </div>
 
             <div>
