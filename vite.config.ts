@@ -17,5 +17,8 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{js,ts}"],
     environment: "node",
     setupFiles: ["./src/test-setup.ts"]
+  },
+  build: {
+    sourcemap: true,
   }
 });
