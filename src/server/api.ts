@@ -13,8 +13,9 @@ export const api = remultApi({
   entities: entities,
   controllers: [PermissionsController],
   dataProvider: new SqlDatabase(
-    new BetterSqlite3DataProvider(new Database("./mydb.sqlite"))
+    new BetterSqlite3DataProvider(new Database("./mydb.sqlite")),
   ),
+
   initApi: async (remult) => {
     const repoUsuario = remult.repo(Usuario);
 
