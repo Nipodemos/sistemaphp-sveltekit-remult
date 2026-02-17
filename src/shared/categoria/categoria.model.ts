@@ -11,11 +11,15 @@ import { remult } from "remult";
       throw new Error("Nível deve ser 1, 2 ou 3");
     }
     
-    let categoriaPai = await e.relations.categoriaPai.findOne({include: {categoriaPai: true}})
+    const categoriaPai = await e.relations.categoriaPai.findOne({
+      include: { categoriaPai: true },
+    });
     if (categoria.nivel > 1) {
       if (!categoriaPai) {
         throw new Error("Categoria pai é obrigatória para níveis 2 e 3");
       }
+    } else if (categoriaPai) {
+      throw new Error("Categoria de nível 1 não pode ter categoria pai");
     }
 
 
@@ -71,6 +75,15 @@ import { remult } from "remult";
     } else if (categoria.nivel === 1) {
       categoria.caminho = categoria.nome;
       categoria.caminhoIds = categoria.id;
+    }
+  },
+  deleting: async (categoria) => {
+    const repo = remult.repo(Categoria);
+    const filhos = await repo.count({ categoriaPai: { $id: categoria.id } });
+    if (filhos > 0) {
+      throw new Error(
+        "Não é possível excluir categoria que possui subcategorias"
+      );
     }
   },
 })
