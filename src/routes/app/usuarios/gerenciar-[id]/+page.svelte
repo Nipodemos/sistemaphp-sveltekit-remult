@@ -4,7 +4,11 @@
   import { Funcao } from "$lib/enums/Funcao";
   import type { PageProps } from "./$types";
   import { enhance } from "$app/forms";
-  import type { PermissoesCompletas } from "$lib/types/permissoes";
+  import type {
+    PermissaoCompleta,
+    PermissoesCompletas,
+    Tela,
+  } from "$lib/types/permissoes";
   import { METADADOS_TELAS, desserializarPermissoesDoDB } from "$lib/types/permissoes";
 
   let { data, form }: PageProps = $props();
@@ -27,9 +31,6 @@
   // Lista de funções disponíveis
   const funcaoValues = Object.values(Funcao);
 
-  // Tipos auxiliares
-  type Tela = keyof PermissoesCompletas;
-
   // Keys helpers para evitar erros de indexação no template
   const telas = $derived(Object.keys(permissoesCompletasUsuario) as Tela[]);
 
@@ -51,32 +52,21 @@
   });
 
   // Retorna as chaves (regras) de uma tela com tipagem correta
-  function regrasDaTela<T extends Tela>(t: T) {
-    return Object.keys(permissoesCompletasUsuario[t]) as Array<
-      keyof PermissoesCompletas[T]
-    >;
+  function regrasDaTela(tela: Tela) {
+    return Object.keys(permissoesCompletasUsuario[tela]);
   }
 
   // Retorna a referência tipada para o objeto de permissão (para bind/alteração)
-  function getPermissao<T extends Tela, R extends keyof PermissoesCompletas[T]>(
-    tela: T,
-    regra: R
-  ) {
-    return permissoesCompletasUsuario[tela][regra];
+  function getPermissao(tela: Tela, regra: string): PermissaoCompleta {
+    return (permissoesCompletasUsuario[tela] as Record<string, PermissaoCompleta>)[regra];
   }
 
-  function togglePermission<
-    T extends Tela,
-    R extends keyof PermissoesCompletas[T],
-  >(tela: T, regra: R, checked: boolean) {
+  function togglePermission(tela: Tela, regra: string, checked: boolean) {
     getPermissao(tela, regra).temPermissao = checked;
   }
 
   // Informação adicional sobre a permissão (descrição), se existir
-  function permissaoInfo<
-    T extends Tela,
-    R extends keyof PermissoesCompletas[T],
-  >(tela: T, regra: R) {
+  function permissaoInfo(tela: Tela, regra: string) {
     const permissao = METADADOS_TELAS[tela]?.permissoes.find(
       (p) => p.chave === regra
     );
@@ -213,7 +203,7 @@
               <label>
                 <input
                   type="checkbox"
-                  name="permission_{tela}_{regra}"
+                  name={`permission_${tela}_${regra}`}
                   checked={getPermissao(tela, regra).temPermissao}
                   onchange={(e) =>
                     togglePermission(tela, regra, e.currentTarget.checked)}

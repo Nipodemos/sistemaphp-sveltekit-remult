@@ -3,7 +3,6 @@ import { Usuario } from "$shared/usuario/usuario.model";
 import { AUTH_SECRET } from "$env/static/private";
 import {
   desserializarPermissoesDoDB,
-  novasPermissoes,
 } from "$lib/types/permissoes";
 import type { ServerSession } from "$lib/types/auth";
 import { createSession } from "./session";

@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { enhance } from "$app/forms";
   import type { ActionData } from "./$types";
+  import type { MetadadoPermissao } from "$lib/types/permissoes";
 
   export let data: {
     tela: string;
@@ -10,12 +11,9 @@
       id: string;
       nome: string;
       login: string;
-      permissoes: any;
+      permissoes: Record<string, boolean>;
     }>;
-    permissoesDisponiveis: Record<
-      string,
-      { descricao: string; temPermissao: boolean }
-    >;
+    permissoesDisponiveis: MetadadoPermissao[];
   };
 
   export let form: ActionData;
@@ -25,12 +23,10 @@
 
   // Função para marcar/desmarcar todas as permissões de uma coluna
   function toggleColuna(permissao: string) {
-    const algumMarcado = data.usuarios.some(
-      (u) => u.permissoes[data.tela][permissao].temPermissao
-    );
+    const algumMarcado = data.usuarios.some((u) => u.permissoes[permissao]);
 
     data.usuarios.forEach((usuario) => {
-      usuario.permissoes[data.tela][permissao].temPermissao = !algumMarcado;
+      usuario.permissoes[permissao] = !algumMarcado;
       usuariosModificados.add(usuario.id);
     });
   }
@@ -40,13 +36,12 @@
     const usuario = data.usuarios.find((u) => u.id === usuarioId);
     if (!usuario) return;
 
-    const algumaPermissaoMarcada = Object.values(
-      usuario.permissoes[data.tela]
-    ).some((p: any) => p.temPermissao);
+    const algumaPermissaoMarcada = Object.values(usuario.permissoes).some(
+      Boolean,
+    );
 
-    Object.keys(usuario.permissoes[data.tela]).forEach((permissao) => {
-      usuario.permissoes[data.tela][permissao].temPermissao =
-        !algumaPermissaoMarcada;
+    Object.keys(usuario.permissoes).forEach((permissao) => {
+      usuario.permissoes[permissao] = !algumaPermissaoMarcada;
     });
 
     usuariosModificados.add(usuarioId);
@@ -59,21 +54,17 @@
 
   // Verificar se uma coluna tem alguma permissão marcada
   function colunaTemAlgumaPermissao(permissao: string): boolean {
-    return data.usuarios.some(
-      (u) => u.permissoes[data.tela][permissao].temPermissao
-    );
+    return data.usuarios.some((u) => u.permissoes[permissao]);
   }
 
   // Verificar se uma linha (usuário) tem alguma permissão marcada
   function linhaTemAlgumaPermissao(usuarioId: string): boolean {
     const usuario = data.usuarios.find((u) => u.id === usuarioId);
     if (!usuario) return false;
-    return Object.values(usuario.permissoes[data.tela]).some(
-      (p: any) => p.temPermissao
-    );
+    return Object.values(usuario.permissoes).some(Boolean);
   }
 
-  $: permissoesKeys = Object.keys(data.permissoesDisponiveis);
+  $: permissoesKeys = data.permissoesDisponiveis.map((permissao) => permissao.chave);
 </script>
 
 <svelte:head>
@@ -129,7 +120,7 @@
                 >
                   <div class="flex flex-col items-center">
                     <span class="text-xs mb-1"
-                      >{data.permissoesDisponiveis[permissao].descricao}</span
+                      >{data.permissoesDisponiveis.find((item) => item.chave === permissao)?.descricao}</span
                     >
                     <button
                       type="button"
@@ -171,9 +162,7 @@
                       type="checkbox"
                       name={`usuario_${usuario.id}_${permissao}`}
                       value="on"
-                      bind:checked={
-                        usuario.permissoes[data.tela][permissao].temPermissao
-                      }
+                      bind:checked={usuario.permissoes[permissao]}
                       on:change={() => onPermissaoChange(usuario.id)}
                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />

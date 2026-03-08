@@ -49,13 +49,13 @@ export const api = remultApi({
         nome: "Fornecedores",
         categoria: "Produtos",
         caminhoUrl: "/app/fornecedores",
-        permissao: "fornecedor.visualizar",
+        permissao: "fornecedores.visualizar",
       },
       {
         nome: "Permissões de Telas",
         categoria: "Sistema",
         caminhoUrl: "/app/permissoes_telas",
-        permissao: "permissoes.visualizar",
+        permissao: "permissoesTelas.editar",
       },
       {
         nome: "Produtos",

@@ -1,11 +1,11 @@
-import type { PermissoesDoUsuario } from "$lib/types/permissoes";
+import type { PermissoesCompletas } from "$lib/types/permissoes";
 
 export interface SessionUser {
   id: string;
   nome: string;
   login: string;
   cargos: string[];
-  permissoesCompletas: PermissoesDoUsuario;
+  permissoesCompletas: PermissoesCompletas;
 }
 
 export interface ServerSession {

@@ -8,7 +8,10 @@ export const load: PageServerLoad = async ({ locals }) => {
   }
 
   // Verificar permissão para visualizar fornecedores
-  if (!locals.session.user.permissoesCompletas?.fornecedor?.visualizar?.temPermissao) {
+  if (
+    !locals.session.user.permissoesCompletas?.fornecedores?.visualizar
+      ?.temPermissao
+  ) {
     // Redirecionar para página de erro ou dashboard
     throw redirect(302, "/app?error=permissao_negada&tela=fornecedores");
   }

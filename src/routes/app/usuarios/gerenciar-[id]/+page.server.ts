@@ -9,9 +9,11 @@ import {
   METADADOS_TELAS,
   type PermissoesCompletas,
   desserializarPermissoesDoDB,
+  novasPermissoes,
+  serializarPermissoesParaSalvar,
 } from "$lib/types/permissoes";
 
-export const load: PageServerLoad = async ({ url,locals }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
   const id = url.searchParams.get("id");
   const repoUsuario = repo(Usuario);
   let user = repoUsuario.create();
@@ -29,7 +31,8 @@ export const load: PageServerLoad = async ({ url,locals }) => {
       user = usuarioEncontrado;
 
       permissoesCompletasUsuario = desserializarPermissoesDoDB(
-        usuarioEncontrado.permissoes ?? []
+        usuarioEncontrado.permissoes ?? [],
+        usuarioEncontrado.cargos ?? [],
       );
     } catch (error) {
       console.warn("Erro ao carregar usuário ou permissões:", error);
@@ -74,23 +77,22 @@ export const actions: Actions = {
         user.nome = nome;
         user.login = login;
         if (senha && senha.length >= 8) {
-          user.senha = await bcrypt.hash("admin", 10); // Senha criptografada;
+          user.senha = await bcrypt.hash(senha, 10);
         }
         user.cargos = cargos;
-        let usuarioAtualizado = await repo(Usuario).save(user);
-        console.log("usuarioAtualizado :>> ", usuarioAtualizado);
+        await repo(Usuario).save(user);
       } else {
         // Criar novo usuário
         if (!senha || senha.length < 8) {
           return fail(400, { error: "Senha deve ter pelo menos 8 caracteres" });
         }
 
-        user.senha = await bcrypt.hash("admin", 10); // Senha criptografada;
+        const senhaCriptografada = await bcrypt.hash(senha, 10);
 
         user = repo(Usuario).create({
           nome,
           login,
-          senha,
+          senha: senhaCriptografada,
           cargos,
         });
         await repo(Usuario).save(user);
@@ -99,44 +101,39 @@ export const actions: Actions = {
       // Salvar permissões: construir objeto com as novas permissões e delegar
       // para o controller que já contém a lógica de salvar (exclui+insere)
       if (user.id) {
-        // Construir PermissoesUsuarioInput a partir do form
-        const permissoesNovas: Record<string, string[]> = {};
-        for (const [tela, regras] of Object.entries(METADADOS_TELAS)) {
-          const selecionadas: string[] = [];
-          for (const regra of Object.keys(regras)) {
-            if (formData.get(`permission_${tela}_${regra}`) === "on") {
-              selecionadas.push(regra);
+        const permissoesSelecionadas = novasPermissoes();
+
+        for (const tela of Object.keys(METADADOS_TELAS) as Array<
+          keyof typeof METADADOS_TELAS
+        >) {
+          const metadados = METADADOS_TELAS[tela];
+          const regrasDaTela = permissoesSelecionadas[tela] as Record<
+            string,
+            { temPermissao: boolean }
+          >;
+          for (const permissao of metadados.permissoes) {
+            if (formData.get(`permission_${tela}_${permissao.chave}`) === "on") {
+              regrasDaTela[permissao.chave].temPermissao = true;
             }
           }
-          if (selecionadas.length) permissoesNovas[tela] = selecionadas;
         }
 
-        // Chama o método do controller para excluir e inserir permissões
         await PermissionsController.salvarPermissoesDoUsuario(
           user.id,
-          permissoesNovas as any
+          serializarPermissoesParaSalvar(permissoesSelecionadas),
         );
       }
 
-      // Recarregar as permissões do DB e gerar o objeto completo com util
-      let userPermissions: PermissoesCompletas = JSON.parse(
-        JSON.stringify(METADADOS_TELAS)
-      );
       let permissoesCompletasUsuario = desserializarPermissoesDoDB([]);
-      
+
       if (user.id) {
         const permissoesUsuario = await repo(PermissaoUsuario).find({
           where: { usuarioId: user.id },
         });
-        // usar a função util para criar o objeto final de permissões
-        // Também popular userPermissions no shape anterior para compatibilidade
-        for (const permissao of permissoesUsuario) {
-          const tela = permissao.tela as keyof typeof userPermissions;
-          const regra = permissao.regra;
-          if ((userPermissions as any)[tela]?.[regra]) {
-            (userPermissions as any)[tela][regra].temPermissao = true;
-          }
-        }
+        permissoesCompletasUsuario = desserializarPermissoesDoDB(
+          permissoesUsuario,
+          user.cargos ?? [],
+        );
       }
 
       // Retornar todos os dados de volta para a tela (inclui permissoesCompletasUsuario)
@@ -146,7 +143,6 @@ export const actions: Actions = {
           ? "Usuário atualizado com sucesso!"
           : "Usuário criado com sucesso!",
         user: user,
-        userPermissions: userPermissions,
         permissoesCompletasUsuario: permissoesCompletasUsuario,
       };
     } catch (error) {

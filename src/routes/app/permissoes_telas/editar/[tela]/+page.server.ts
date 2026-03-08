@@ -1,7 +1,11 @@
 import { remult } from "remult";
 import { Usuario } from "$shared/usuario/usuario.model";
 import { PermissaoUsuario } from "$shared/permissao_usuario/permissao_usuario.model";
-import { METADADOS_TELAS, type Tela } from "$lib/types/permissoes";
+import {
+  METADADOS_TELAS,
+  type PermissaoRegraKey,
+  type Tela,
+} from "$lib/types/permissoes";
 
 import { error, fail } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
@@ -61,9 +65,9 @@ export const load: PageServerLoad = async ({ params }) => {
 
   return {
     tela,
-    nomeTela: tela.charAt(0).toUpperCase() + tela.slice(1),
+    nomeTela: METADADOS_TELAS[tela].nome,
     usuarios: usuariosComPermissoes,
-    permissoesDisponiveis: METADADOS_TELAS[tela],
+    permissoesDisponiveis: METADADOS_TELAS[tela].permissoes,
   };
 };
 
@@ -90,7 +94,7 @@ export const actions = {
       const permissoesParaInserir: Array<{
         usuarioId: string;
         tela: Tela;
-        regra: string;
+        regra: PermissaoRegraKey<typeof tela>;
       }> = [];
 
       for (const [key, value] of data.entries()) {
@@ -110,7 +114,7 @@ export const actions = {
               permissoesParaInserir.push({
                 usuarioId,
                 tela,
-                regra: permissao,
+                regra: permissao as PermissaoRegraKey<typeof tela>,
               });
             }
           }
@@ -119,7 +123,10 @@ export const actions = {
 
       // Inserir as novas permissões
       for (const permissao of permissoesParaInserir) {
-        await permissoesRepo.insert(permissao);
+        await permissoesRepo.insert({
+          ...permissao,
+          permitido: true,
+        });
       }
 
       return {
