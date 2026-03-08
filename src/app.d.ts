@@ -1,15 +1,14 @@
 // See https://kit.svelte.dev/docs/types#app
 
+import type { ServerSession } from "$lib/types/auth";
 import type { PermissoesCompletas } from "$lib/types/permissoes";
-import type { Usuario } from "$shared/usuario/usuario.model";
 
 // for information about these interfaces
 declare global {
   namespace App {
     // interface Error {}
     interface Locals {
-      usuario: Usuario | null;
-      permissoesCompletas: PermissoesCompletas;
+      session: ServerSession | null;
     }
     // interface PageData {}
     // interface PageState {}
@@ -19,6 +18,9 @@ declare global {
 
 declare module "remult" {
   interface UserInfo {
+    id: string;
+    name: string;
+    roles: string[];
     permissoesCompletas: PermissoesCompletas;
   }
   // interface FieldOptions<entityType, valueType> {

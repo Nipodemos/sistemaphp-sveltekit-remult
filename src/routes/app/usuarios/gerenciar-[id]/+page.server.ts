@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ url,locals }) => {
   const repoUsuario = repo(Usuario);
   let user = repoUsuario.create();
   let permissoesCompletasUsuario: PermissoesCompletas =
-    locals.permissoesCompletas ?? desserializarPermissoesDoDB([]);
+    locals.session?.user.permissoesCompletas ?? desserializarPermissoesDoDB([]);
   if (id) {
     try {
       let usuarioEncontrado = await repoUsuario.findFirst(

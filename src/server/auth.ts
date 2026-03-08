@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken";
 import { Usuario } from "$shared/usuario/usuario.model";
 import { AUTH_SECRET } from "$env/static/private";
-import { repo } from "remult";
 import {
   desserializarPermissoesDoDB,
-  type PermissoesCompletas,
+  novasPermissoes,
 } from "$lib/types/permissoes";
+import type { ServerSession } from "$lib/types/auth";
 import { createSession } from "./session";
 
 export function createSessionToken(usuarioQuerendoLogar: Usuario): string {
@@ -14,12 +14,19 @@ export function createSessionToken(usuarioQuerendoLogar: Usuario): string {
 
   // Desserializar para o formato completo usado pelo cliente
   // Passa os cargos do usuário para verificar se é admin
-  const permissoesCompletas: PermissoesCompletas =
-    desserializarPermissoesDoDB(permissoesArray, usuarioQuerendoLogar.cargos);
+  const permissoesCompletas = desserializarPermissoesDoDB(
+    permissoesArray,
+    usuarioQuerendoLogar.cargos,
+  );
 
-  const payload: App.Locals = {
-    usuario: repo(Usuario).toJson(usuarioQuerendoLogar),
-    permissoesCompletas,
+  const payload: ServerSession = {
+    user: {
+      id: usuarioQuerendoLogar.id,
+      nome: usuarioQuerendoLogar.nome,
+      login: usuarioQuerendoLogar.login,
+      cargos: usuarioQuerendoLogar.cargos ?? [],
+      permissoesCompletas,
+    },
   };
 
   // Cria a sessão no servidor e obtém o ID
@@ -29,7 +36,9 @@ export function createSessionToken(usuarioQuerendoLogar: Usuario): string {
   return jwt.sign({ sessionId }, AUTH_SECRET, { expiresIn: "24h" });
 }
 
-export function verifySessionToken(token: string): { sessionId: string } | null {
+export function verifySessionToken(
+  token: string,
+): { sessionId: string } | null {
   try {
     const payload = jwt.verify(token, AUTH_SECRET) as { sessionId: string };
     return payload;

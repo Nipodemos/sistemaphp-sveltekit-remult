@@ -8,8 +8,7 @@ export const handleAuth: Handle = async ({ event, resolve }) => {
   const token = event.cookies.get("session_token");
   // console.log("🔍 Token no cookie:", token ? "presente" : "ausente");
 
-  event.locals.usuario = null;
-  event.locals.permissoesCompletas = null;
+  event.locals.session = null;
 
   if (token) {
     const payload = verifySessionToken(token);
@@ -18,9 +17,9 @@ export const handleAuth: Handle = async ({ event, resolve }) => {
       const sessionData = getSession(payload.sessionId);
       
       if (sessionData) {
-        // console.log("🔍 Sessão encontrada para:", sessionData.usuario?.nome);
-        // Atribui a referência da sessão ao locals (permite mutabilidade)
-        event.locals = sessionData; 
+        // console.log("🔍 Sessão encontrada para:", sessionData.user.nome);
+        // Expõe a sessão atual no contexto da request.
+        event.locals.session = sessionData;
       } else {
         // console.log("🔍 Sessão expirada ou inválida");
         event.cookies.delete("session_token", { path: "/" });

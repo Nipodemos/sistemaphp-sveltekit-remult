@@ -3,12 +3,12 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ locals }) => {
   // Verificar se o usuário está logado
-  if (!locals.permissoesCompletas) {
+  if (!locals.session) {
     throw redirect(302, "/login");
   }
 
   // Verificar permissão para visualizar fornecedores
-  if (!locals.permissoesCompletas?.fornecedor?.visualizar?.temPermissao) {
+  if (!locals.session.user.permissoesCompletas?.fornecedor?.visualizar?.temPermissao) {
     // Redirecionar para página de erro ou dashboard
     throw redirect(302, "/app?error=permissao_negada&tela=fornecedores");
   }

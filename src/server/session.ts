@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
+import type { ServerSession } from "$lib/types/auth";
 
 interface SessionEntry {
-  data: App.Locals;
+  data: ServerSession;
   expiresAt: number;
 }
 
@@ -19,11 +20,11 @@ const store = globalThis.sessionStore;
 
 /**
  * Cria uma nova sessão e retorna o ID
- * @param data Dados da sessão (App.Locals)
+ * @param data Dados da sessão (ServerSession)
  * @param expiresInMinutes Tempo de expiração em minutos (padrão: 24h)
  */
 export function createSession(
-  data: App.Locals,
+  data: ServerSession,
   expiresInMinutes: number = 60 * 24
 ): string {
   const sessionId = randomUUID();
@@ -42,7 +43,7 @@ export function createSession(
  * Retorna a referência direta ao objeto, permitindo mutação.
  * Retorna null se não existir ou estiver expirada.
  */
-export function getSession(sessionId: string): App.Locals | null {
+export function getSession(sessionId: string): ServerSession | null {
   const session = store.get(sessionId);
 
   if (!session) {

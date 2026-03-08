@@ -1,23 +1,20 @@
 import { redirect, type Actions } from "@sveltejs/kit";
 
 export async function load({ locals }) {
-  if (!locals.usuario) {
+  if (!locals.session) {
     throw redirect(303, "/login");
   }
 
-  // Criar objeto completo
-  const permissoesCompletas = locals.permissoesCompletas;
-
   return {
-    usuario: locals.usuario,
-    permissoes: permissoesCompletas,
+    usuario: locals.session.user,
+    permissoes: locals.session.user.permissoesCompletas,
   };
 }
 
 export const actions = {
   logout: async ({ locals, cookies }) => {
     // Limpa o usuário da sessão
-    locals.usuario = null;
+    locals.session = null;
     // Remove o cookie de autenticação, se existir
     cookies.delete("auth", { path: "/" });
     // Redireciona para a página de login
