@@ -11,14 +11,14 @@ export const load = (async ({ locals, params }) => {
 
   const id = params.id;
 
-  // Se id for "novo", é criação
+  // Se id for "novo", é adicao
   if (id === "novo") {
-    // Verificar permissão para criar fornecedores
+    // Verificar permissao para adicionar fornecedores
     if (
-      !locals.session.user.permissoesCompletas?.fornecedores?.criar
+      !locals.session.user.permissoesCompletas?.fornecedores?.adicionar
         ?.temPermissao
     ) {
-      throw redirect(302, "/app?error=permissao_negada&tela=fornecedores&acao=criar");
+      throw redirect(302, "/app?error=permissao_negada&tela=fornecedores&acao=adicionar");
     }
     return { fornecedor: null };
   }

@@ -49,7 +49,7 @@ export class PermissaoUsuario {
       }
     },
   })
-  regra!: PermissaoRegraKey; // Aqui guardamos 'visualizar', 'criar', etc.
+  regra!: PermissaoRegraKey; // Aqui guardamos 'visualizar', 'adicionar', etc.
 
   @Fields.boolean()
   permitido = false; // Indica se o usuário tem permissão para esta regra nesta tela

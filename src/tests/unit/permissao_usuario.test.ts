@@ -56,7 +56,7 @@ describe("PermissaoUsuario Model", () => {
       const permissao = repo.create({
         usuarioId: "usuario-id",
         tela: "produtos",
-        regra: "criar",
+        regra: "adicionar",
       });
 
       await expect(repo.save(permissao)).resolves.not.toThrow();

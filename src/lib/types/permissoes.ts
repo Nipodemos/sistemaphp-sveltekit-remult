@@ -12,7 +12,7 @@ const DEFINICOES_TELAS = {
     descricao: "Permissoes relacionadas ao cadastro e manutencao de categorias.",
     permissoes: {
       visualizar: "Visualizar categorias cadastradas.",
-      criar: "Criar novas categorias.",
+      adicionar: "Adicionar novas categorias.",
       editar: "Editar categorias existentes.",
       excluir: "Excluir categorias.",
     },
@@ -22,7 +22,7 @@ const DEFINICOES_TELAS = {
     descricao: "Permissoes relacionadas ao cadastro e manutencao de fornecedores.",
     permissoes: {
       visualizar: "Visualizar fornecedores cadastrados.",
-      criar: "Criar novos fornecedores.",
+      adicionar: "Adicionar novos fornecedores.",
       editar: "Editar fornecedores existentes.",
       excluir: "Excluir fornecedores.",
       relatorio: "Emitir relatorios de fornecedores.",
@@ -40,7 +40,7 @@ const DEFINICOES_TELAS = {
     descricao: "Permissoes relacionadas ao cadastro e manutencao de produtos.",
     permissoes: {
       visualizar: "Visualizar produtos cadastrados.",
-      criar: "Criar novos produtos.",
+      adicionar: "Adicionar novos produtos.",
       editar: "Editar produtos existentes.",
       excluir: "Excluir produtos.",
     },
@@ -58,7 +58,7 @@ const DEFINICOES_TELAS = {
     descricao: "Permissoes relacionadas ao cadastro e manutencao de usuarios.",
     permissoes: {
       visualizar: "Visualizar usuarios cadastrados.",
-      criar: "Criar novos usuarios.",
+      adicionar: "Adicionar novos usuarios.",
       editar: "Editar usuarios existentes.",
       excluir: "Excluir usuarios.",
     },
@@ -68,7 +68,7 @@ const DEFINICOES_TELAS = {
     descricao: "Permissoes relacionadas ao fluxo de vendas.",
     permissoes: {
       visualizar: "Visualizar vendas registradas.",
-      criar: "Criar novas vendas.",
+      adicionar: "Adicionar novas vendas.",
       editar: "Editar vendas existentes.",
       excluir: "Excluir vendas.",
       relatorio: "Emitir relatorios de vendas.",
@@ -81,7 +81,7 @@ const DEFINICOES_TELAS = {
     descricao: "Permissoes relacionadas ao fluxo de compras.",
     permissoes: {
       visualizar: "Visualizar compras registradas.",
-      criar: "Criar novas compras.",
+      adicionar: "Adicionar novas compras.",
       editar: "Editar compras existentes.",
       excluir: "Excluir compras.",
       relatorio: "Emitir relatorios de compras.",
@@ -92,7 +92,7 @@ const DEFINICOES_TELAS = {
     descricao: "Permissoes relacionadas ao controle de estoque.",
     permissoes: {
       visualizar: "Visualizar itens de estoque.",
-      criar: "Registrar movimentacoes de estoque.",
+      adicionar: "Registrar movimentacoes de estoque.",
       editar: "Editar movimentacoes de estoque.",
       excluir: "Excluir movimentacoes de estoque.",
       relatorio: "Emitir relatorios de estoque.",
@@ -280,13 +280,11 @@ export const verificarPermissao = (
     return false;
   }
 
-  const telaNormalizada = (tela === "fornecedor" ? "fornecedores" : tela) as Tela;
-  const regrasDaTela = permissoes[telaNormalizada];
+  const regrasDaTela = permissoes[tela as Tela];
 
   if (!regrasDaTela) {
     return false;
   }
 
-  const regraNormalizada = (regra === "adicionar" ? "criar" : regra) as keyof typeof regrasDaTela;
-  return regrasDaTela[regraNormalizada]?.temPermissao ?? false;
+  return regrasDaTela[regra as keyof typeof regrasDaTela]?.temPermissao ?? false;
 };
