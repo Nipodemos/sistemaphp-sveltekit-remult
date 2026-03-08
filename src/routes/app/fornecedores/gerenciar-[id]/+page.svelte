@@ -115,7 +115,7 @@
         }
       } else {
         await repoFornecedor.insert(fornecedorData);
-        sucesso = "Fornecedor criado com sucesso!";
+        sucesso = "Fornecedor adicionado com sucesso!";
       }
 
       // Voltar para a listagem após 1.5 segundos
@@ -187,12 +187,12 @@
 </script>
 
 <svelte:head>
-  <title>{isEditing ? "Editar" : "Criar"} Fornecedor</title>
+  <title>{isEditing ? "Editar" : "Adicionar"} Fornecedor</title>
 </svelte:head>
 
 <div>
   <div>
-    <h1>{isEditing ? "Editar" : "Criar"} Fornecedor</h1>
+    <h1>{isEditing ? "Editar" : "Adicionar"} Fornecedor</h1>
     <a href="/app/fornecedores">← Voltar</a>
   </div>
 
@@ -436,7 +436,7 @@
 
     <div class="actions">
       <button type="submit" disabled={salvando}>
-        {salvando ? "Salvando..." : isEditing ? "Atualizar" : "Criar"}
+        {salvando ? "Salvando..." : isEditing ? "Atualizar" : "Adicionar"}
       </button>
 
       <button type="button" onclick={limparFormulario} disabled={salvando}>

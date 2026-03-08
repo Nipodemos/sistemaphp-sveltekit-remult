@@ -28,7 +28,7 @@
       class="btn preset-filled-primary"
     >
       <Plus class="size-4" />
-      Criar usuário
+      Adicionar usuário
     </a>
   </header>
   <div>

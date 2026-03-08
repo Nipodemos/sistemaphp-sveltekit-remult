@@ -160,7 +160,7 @@
         return;
       }
 
-      // Criar ou atualizar produto
+      // Adicionar ou atualizar produto
       let produto: Produto;
       if (modoEdicao && produtoIdEdicao) {
         const produtoEncontrado = await repoProduto.findId(produtoIdEdicao);
@@ -201,7 +201,7 @@
 
       sucesso = modoEdicao
         ? "Produto atualizado com sucesso!"
-        : "Produto criado com sucesso!";
+        : "Produto adicionado com sucesso!";
 
       // Voltar para a listagem após 1.5 segundos
       setTimeout(() => {
@@ -249,12 +249,12 @@
       </div>
       <div>
         <h1 class="h3 font-bold">
-          {modoEdicao ? "Editar Produto" : "Novo Produto"}
+          {modoEdicao ? "Editar Produto" : "Adicionar Produto"}
         </h1>
         <p class="text-surface-600-400 text-xs hidden sm:block">
           {modoEdicao
             ? "Atualize as informações do produto"
-            : "Preencha os campos para cadastrar um novo produto"}
+            : "Preencha os campos para adicionar um produto"}
         </p>
       </div>
     </div>

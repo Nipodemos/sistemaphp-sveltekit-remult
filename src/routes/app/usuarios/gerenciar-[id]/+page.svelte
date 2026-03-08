@@ -75,12 +75,12 @@
 </script>
 
 <svelte:head>
-  <title>{isEditing ? "Editar" : "Criar"} Usuário</title>
+  <title>{isEditing ? "Editar" : "Adicionar"} Usuário</title>
 </svelte:head>
 
 <div>
   <div>
-    <h1>{isEditing ? "Editar" : "Criar"} Usuário</h1>
+    <h1>{isEditing ? "Editar" : "Adicionar"} Usuário</h1>
     <a href="/app/usuarios">← Voltar</a>
   </div>
 
@@ -221,7 +221,7 @@
 
     <div>
       <button type="submit">
-        {isEditing ? "Salvar Alterações" : "Criar Usuário"}
+        {isEditing ? "Salvar Alterações" : "Adicionar Usuário"}
       </button>
       <a href="/app/usuarios">Cancelar</a>
     </div>

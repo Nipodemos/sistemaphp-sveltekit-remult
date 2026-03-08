@@ -65,11 +65,9 @@ export const actions: Actions = {
     try {
       let user = repo(Usuario).create();
 
-      console.log("id :>> ", id);
       if (id) {
         // Editar usuário existente
         const foundUser = await repo(Usuario).findFirst({ id });
-        console.log("foundUser :>> ", foundUser);
         if (!foundUser) {
           return fail(404, { error: "Usuário não encontrado" });
         }
@@ -82,7 +80,7 @@ export const actions: Actions = {
         user.cargos = cargos;
         await repo(Usuario).save(user);
       } else {
-        // Criar novo usuário
+        // Adicionar novo usuário
         if (!senha || senha.length < 8) {
           return fail(400, { error: "Senha deve ter pelo menos 8 caracteres" });
         }
@@ -141,7 +139,7 @@ export const actions: Actions = {
         success: true,
         message: id
           ? "Usuário atualizado com sucesso!"
-          : "Usuário criado com sucesso!",
+          : "Usuário adicionado com sucesso!",
         user: user,
         permissoesCompletasUsuario: permissoesCompletasUsuario,
       };

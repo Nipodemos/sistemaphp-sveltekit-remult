@@ -173,7 +173,7 @@
 
       await repoCategoria.save(categoria);
 
-      sucesso = modoEdicao ? "Categoria atualizada!" : "Categoria criada!";
+      sucesso = modoEdicao ? "Categoria atualizada!" : "Categoria adicionada!";
       setTimeout(() => goto("/app/categorias"), 1500);
     } catch (err) {
       erro =
@@ -204,7 +204,7 @@
       if (p2) parts.push(p2.nome);
     }
     if (nome) parts.push(nome);
-    return parts.join(" > ") || "Nova Categoria";
+    return parts.join(" > ") || "Adicionar Categoria";
   });
 </script>
 
@@ -226,7 +226,7 @@
       </div>
       <div>
         <h1 class="h3 font-bold">
-          {modoEdicao ? "Editar Categoria" : "Nova Categoria"}
+          {modoEdicao ? "Editar Categoria" : "Adicionar Categoria"}
         </h1>
         <p class="text-surface-600-400 text-xs">{getBreadcrumb()}</p>
       </div>

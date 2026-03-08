@@ -109,7 +109,7 @@
 
   <div>
     <a href="/app/fornecedores/gerenciar-novo">
-      <button>Novo Fornecedor</button>
+      <button>Adicionar Fornecedor</button>
     </a>
   </div>
 
@@ -185,7 +185,7 @@
 
       {#if fornecedores.length === 0}
         <p>Nenhum fornecedor encontrado.</p>
-        <a href="/app/fornecedores/gerenciar-novo">Criar primeiro fornecedor</a>
+        <a href="/app/fornecedores/gerenciar-novo">Adicionar primeiro fornecedor</a>
       {/if}
     </div>
   {/if}
