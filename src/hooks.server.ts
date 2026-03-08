@@ -1,5 +1,5 @@
 import { sequence } from "@sveltejs/kit/hooks";
-import { api as handleRemult } from "./server/api";
+import { api as handleRemult } from "./server/remult";
 import { verifySessionToken } from "./server/auth";
 import { getSession } from "./server/session";
 import type { Handle } from "@sveltejs/kit";
