@@ -9,18 +9,20 @@
 
   let { data, form }: PageProps = $props();
 
-  let user = $state<Usuario>(data.user || repo(Usuario).create());
+  const repoUsuario = repo(Usuario);
+
+  let user = $state<Usuario>(repoUsuario.create());
   let permissoesCompletasUsuario = $state<PermissoesCompletas>(
-    data.permissoesCompletasUsuario ?? desserializarPermissoesDoDB([])
+    desserializarPermissoesDoDB([])
   );
   let confirmPassword = $state("");
   let showPassword = $state(false);
 
   // Mensagens de feedback
-  let message = form?.success ? form.message : "";
-  let error = form?.error ?? "";
+  const message = $derived(form?.success ? form.message : "");
+  const error = $derived(form?.error ?? "");
 
-  const isEditing = !!data.user?.id;
+  const isEditing = $derived(!!data.user?.id);
 
   // Lista de funções disponíveis
   const funcaoValues = Object.values(Funcao);
@@ -29,7 +31,24 @@
   type Tela = keyof PermissoesCompletas;
 
   // Keys helpers para evitar erros de indexação no template
-  const telas = Object.keys(permissoesCompletasUsuario) as Tela[];
+  const telas = $derived(Object.keys(permissoesCompletasUsuario) as Tela[]);
+
+  function criarUsuarioState(usuario: PageProps["data"]["user"]) {
+    return repoUsuario.create(usuario ? repoUsuario.toJson(usuario) : undefined);
+  }
+
+  function criarPermissoesState(
+    permissoes: PageProps["data"]["permissoesCompletasUsuario"] | null | undefined
+  ) {
+    return structuredClone(permissoes ?? desserializarPermissoesDoDB([]));
+  }
+
+  $effect(() => {
+    user = criarUsuarioState(data.user);
+    permissoesCompletasUsuario = criarPermissoesState(
+      data.permissoesCompletasUsuario
+    );
+  });
 
   // Retorna as chaves (regras) de uma tela com tipagem correta
   function regrasDaTela<T extends Tela>(t: T) {

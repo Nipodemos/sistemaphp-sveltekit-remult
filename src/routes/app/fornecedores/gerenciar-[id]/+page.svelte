@@ -7,39 +7,61 @@
 
   let { data }: PageProps = $props();
 
-  // Estados reativos para os campos do formulário
-  let razaoSocial = $state(data.fornecedor?.razaoSocial ?? "");
-  let nomeFantasia = $state(data.fornecedor?.nomeFantasia ?? "");
-  let tipoDocumento = $state<TipoDocumento>(
-    data.fornecedor?.tipoDocumento ?? "CNPJ",
-  );
-  let documento = $state(data.fornecedor?.documento ?? "");
-  let rua = $state(data.fornecedor?.rua ?? "");
-  let numero = $state(data.fornecedor?.numero ?? "");
-  let complemento = $state(data.fornecedor?.complemento ?? "");
-  let bairro = $state(data.fornecedor?.bairro ?? "");
-  let cidade = $state(data.fornecedor?.cidade ?? "");
-  let estado = $state(data.fornecedor?.estado ?? "");
-  let cep = $state(data.fornecedor?.cep ?? "");
-  let telefonePrincipal = $state(data.fornecedor?.telefonePrincipal ?? "");
-  let telefoneSecundario = $state(data.fornecedor?.telefoneSecundario ?? "");
-  let email = $state(data.fornecedor?.email ?? "");
-  let representanteNome = $state(data.fornecedor?.representanteNome ?? "");
-  let representanteTelefone = $state(
-    data.fornecedor?.representanteTelefone ?? "",
-  );
-  let representanteEmail = $state(data.fornecedor?.representanteEmail ?? "");
-  let codigo = $state(data.fornecedor?.codigo ?? "");
+  type FornecedorPageData = PageProps["data"]["fornecedor"];
+
+  let razaoSocial = $state("");
+  let nomeFantasia = $state("");
+  let tipoDocumento = $state<TipoDocumento>("CNPJ");
+  let documento = $state("");
+  let rua = $state("");
+  let numero = $state("");
+  let complemento = $state("");
+  let bairro = $state("");
+  let cidade = $state("");
+  let estado = $state("");
+  let cep = $state("");
+  let telefonePrincipal = $state("");
+  let telefoneSecundario = $state("");
+  let email = $state("");
+  let representanteNome = $state("");
+  let representanteTelefone = $state("");
+  let representanteEmail = $state("");
+  let codigo = $state("");
 
   // Estados da aplicação
   let salvando = $state(false);
   let erro = $state<string | null>(null);
   let sucesso = $state<string | null>(null);
 
-  const isEditing = !!data.fornecedor?.id;
+  const isEditing = $derived(!!data.fornecedor?.id);
 
   // Repositório
   const repoFornecedor = remult.repo(Fornecedor);
+
+  function preencherFormulario(fornecedor: FornecedorPageData) {
+    razaoSocial = fornecedor?.razaoSocial ?? "";
+    nomeFantasia = fornecedor?.nomeFantasia ?? "";
+    tipoDocumento = fornecedor?.tipoDocumento ?? "CNPJ";
+    documento = fornecedor?.documento ?? "";
+    rua = fornecedor?.rua ?? "";
+    numero = fornecedor?.numero ?? "";
+    complemento = fornecedor?.complemento ?? "";
+    bairro = fornecedor?.bairro ?? "";
+    cidade = fornecedor?.cidade ?? "";
+    estado = fornecedor?.estado ?? "";
+    cep = fornecedor?.cep ?? "";
+    telefonePrincipal = fornecedor?.telefonePrincipal ?? "";
+    telefoneSecundario = fornecedor?.telefoneSecundario ?? "";
+    email = fornecedor?.email ?? "";
+    representanteNome = fornecedor?.representanteNome ?? "";
+    representanteTelefone = fornecedor?.representanteTelefone ?? "";
+    representanteEmail = fornecedor?.representanteEmail ?? "";
+    codigo = fornecedor?.codigo ?? "";
+  }
+
+  $effect(() => {
+    preencherFormulario(data.fornecedor);
+  });
 
   async function salvar() {
     try {
@@ -109,23 +131,7 @@
   }
 
   function limparFormulario() {
-    razaoSocial = "";
-    nomeFantasia = "";
-    tipoDocumento = "CNPJ";
-    documento = "";
-    rua = "";
-    numero = "";
-    complemento = "";
-    bairro = "";
-    cidade = "";
-    estado = "";
-    cep = "";
-    telefonePrincipal = "";
-    telefoneSecundario = "";
-    email = "";
-    representanteNome = "";
-    representanteTelefone = "";
-    representanteEmail = "";
+    preencherFormulario(null);
   }
 
   // Função para aplicar máscara ao documento
