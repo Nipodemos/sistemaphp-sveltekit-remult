@@ -4,6 +4,22 @@
   import type { TipoDocumento } from "$shared/fornecedor/fornecedor.model";
   import type { PageProps } from "./$types";
   import { goto } from "$app/navigation";
+  import {
+    Save,
+    ArrowLeft,
+    Truck,
+    Eraser,
+    BadgeCheck,
+    FileText,
+    MapPinned,
+    Phone,
+    Mail,
+    UserRound,
+    CircleAlert,
+    CircleCheck,
+    Building2,
+  } from "@lucide/svelte";
+  import { Progress } from "@skeletonlabs/skeleton-svelte";
 
   let { data }: PageProps = $props();
 
@@ -28,17 +44,14 @@
   let representanteEmail = $state("");
   let codigo = $state("");
 
-  // Estados da aplicação
   let salvando = $state(false);
   let erro = $state<string | null>(null);
   let sucesso = $state<string | null>(null);
 
   const isEditing = $derived(!!data.fornecedor?.id);
-
-  // Repositório
   const repoFornecedor = remult.repo(Fornecedor);
 
-  function preencherFormulario(fornecedor: FornecedorPageData) {
+  function preencherFormulario(fornecedor: FornecedorPageData | null) {
     razaoSocial = fornecedor?.razaoSocial ?? "";
     nomeFantasia = fornecedor?.nomeFantasia ?? "";
     tipoDocumento = fornecedor?.tipoDocumento ?? "CNPJ";
@@ -69,7 +82,6 @@
       erro = null;
       sucesso = null;
 
-      // Validações básicas no frontend
       if (!razaoSocial.trim()) {
         erro = "Razão social é obrigatória";
         return;
@@ -118,7 +130,6 @@
         sucesso = "Fornecedor adicionado com sucesso!";
       }
 
-      // Voltar para a listagem após 1.5 segundos
       setTimeout(() => {
         goto("/app/fornecedores");
       }, 1500);
@@ -134,7 +145,6 @@
     preencherFormulario(null);
   }
 
-  // Função para aplicar máscara ao documento
   function aplicarMascaraDocumento() {
     const limpo = documento.replace(/\D/g, "");
 
@@ -148,7 +158,6 @@
     }
   }
 
-  // Função para aplicar máscara ao telefone
   function aplicarMascaraTelefone(
     campo: "principal" | "secundario" | "representante",
   ) {
@@ -177,7 +186,6 @@
     }
   }
 
-  // Função para aplicar máscara ao CEP
   function aplicarMascaraCEP() {
     const limpo = cep.replace(/\D/g, "");
     if (limpo.length <= 8) {
@@ -190,377 +198,420 @@
   <title>{isEditing ? "Editar" : "Adicionar"} Fornecedor</title>
 </svelte:head>
 
-<div>
-  <div>
-    <h1>{isEditing ? "Editar" : "Adicionar"} Fornecedor</h1>
-    <a href="/app/fornecedores">← Voltar</a>
-  </div>
+<div class="space-y-6">
+  <header class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <div class="space-y-3">
+      <div class="flex items-center gap-3">
+        <button
+          onclick={() => goto("/app/fornecedores")}
+          class="btn-icon preset-tonal-surface hover:preset-filled-surface-200-800"
+          title="Voltar"
+        >
+          <ArrowLeft size={20} />
+        </button>
 
-  {#if sucesso}
-    <div class="success">
-      <strong>Sucesso:</strong>
-      {sucesso}
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
+          <Truck size={28} />
+        </div>
+
+        <div>
+          <h1 class="h2 font-bold">
+            {isEditing ? "Editar Fornecedor" : "Adicionar Fornecedor"}
+          </h1>
+          <p class="text-sm text-surface-600-400">
+            {isEditing
+              ? "Atualize os dados cadastrais, contato e endereço"
+              : "Cadastre um novo fornecedor com informações completas"}
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <article class="card preset-outlined-surface-200-800 bg-surface-50-950 p-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-surface-500">
+            Status
+          </p>
+          <div class="mt-2 flex items-center gap-2">
+            <CircleCheck size={18} class="text-primary-500" />
+            <span class="font-medium">{isEditing ? "Edição" : "Novo cadastro"}</span>
+          </div>
+        </article>
+
+        <article class="card preset-outlined-surface-200-800 bg-surface-50-950 p-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-surface-500">
+            Documento
+          </p>
+          <div class="mt-2 flex items-center gap-2">
+            <FileText size={18} class="text-primary-500" />
+            <span class="font-medium">{tipoDocumento}</span>
+          </div>
+        </article>
+
+        <article class="card preset-outlined-surface-200-800 bg-surface-50-950 p-4">
+          <p class="text-xs font-bold uppercase tracking-wider text-surface-500">
+            Código
+          </p>
+          <div class="mt-2 flex items-center gap-2">
+            <BadgeCheck size={18} class="text-primary-500" />
+            <span class="font-medium">{codigo || "-"}</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </header>
+
+  {#if erro}
+    <div class="alert preset-filled-error flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+      <CircleAlert size={20} />
+      <p>{erro}</p>
     </div>
   {/if}
 
-  <form
-    onsubmit={(e) => {
-      e.preventDefault();
-      salvar();
-    }}
-  >
-    <!-- Informações Básicas -->
-    <div class="section">
-      <h2>Informações Básicas</h2>
+  {#if sucesso}
+    <div class="alert preset-filled-success flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+      <CircleCheck size={20} />
+      <p>{sucesso}</p>
+    </div>
+  {/if}
 
-      {#if isEditing && codigo}
-        <p><strong>Código:</strong> {codigo}</p>
-      {/if}
+  {#if salvando}
+    <div class="flex flex-col items-center justify-center py-24 space-y-6">
+      <Progress value={null} class="w-64">
+        <Progress.Track>
+          <Progress.Range class="bg-primary-500 animate-[custom-animation_2s_ease-in-out_infinite]" />
+        </Progress.Track>
+      </Progress>
+      <p class="font-medium text-surface-600-400 animate-pulse">
+        Salvando fornecedor...
+      </p>
+    </div>
+  {:else}
+    <form
+      onsubmit={(e) => {
+        e.preventDefault();
+        salvar();
+      }}
+      class="space-y-6"
+    >
+      <section class="card overflow-hidden preset-outlined-surface-200-800 bg-surface-50-950">
+        <header class="flex items-center gap-2 border-b border-surface-200-800 bg-surface-100-900/10 p-4">
+          <Building2 size={18} class="text-primary-500" />
+          <h2 class="text-sm font-bold uppercase tracking-wider">
+            Informações Básicas
+          </h2>
+        </header>
 
-      <div class="form-group">
-        <label for="razaoSocial">Razão Social *</label>
-        <input
-          type="text"
-          id="razaoSocial"
-          bind:value={razaoSocial}
-          disabled={salvando}
-          required
-        />
+        <div class="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2">
+          <label class="label">
+            <span class="label-text">Razão Social *</span>
+            <div class="input-group grid-cols-[auto_1fr]">
+              <div class="ig-cell preset-tonal"><Building2 size={16} /></div>
+              <input
+                type="text"
+                class="ig-input"
+                bind:value={razaoSocial}
+                disabled={salvando}
+                required
+                placeholder="Ex: Empresa de Serviços LTDA"
+              />
+            </div>
+          </label>
+
+          <label class="label">
+            <span class="label-text">Nome Fantasia *</span>
+            <div class="input-group grid-cols-[auto_1fr]">
+              <div class="ig-cell preset-tonal"><BadgeCheck size={16} /></div>
+              <input
+                type="text"
+                class="ig-input"
+                bind:value={nomeFantasia}
+                disabled={salvando}
+                required
+                placeholder="Ex: Serviços Alpha"
+              />
+            </div>
+          </label>
+
+          <label class="label">
+            <span class="label-text">Tipo de Documento *</span>
+            <div class="input-group grid-cols-[auto_1fr]">
+              <div class="ig-cell preset-tonal"><FileText size={16} /></div>
+              <select
+                class="ig-select"
+                bind:value={tipoDocumento}
+                disabled={salvando}
+                onchange={() => {
+                  documento = "";
+                }}
+              >
+                <option value="CNPJ">CNPJ</option>
+                <option value="CPF">CPF</option>
+              </select>
+            </div>
+          </label>
+
+          <label class="label">
+            <span class="label-text">{tipoDocumento} *</span>
+            <div class="input-group grid-cols-[auto_1fr]">
+              <div class="ig-cell preset-tonal"><FileText size={16} /></div>
+              <input
+                type="text"
+                class="ig-input"
+                bind:value={documento}
+                disabled={salvando}
+                oninput={aplicarMascaraDocumento}
+                required
+                placeholder={tipoDocumento === "CNPJ"
+                  ? "00.000.000/0000-00"
+                  : "000.000.000-00"}
+              />
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <section class="card overflow-hidden preset-outlined-surface-200-800 bg-surface-50-950">
+          <header class="flex items-center gap-2 border-b border-surface-200-800 bg-surface-100-900/10 p-4">
+            <MapPinned size={18} class="text-primary-500" />
+            <h2 class="text-sm font-bold uppercase tracking-wider">
+              Endereço
+            </h2>
+          </header>
+
+          <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
+            <label class="label md:col-span-2">
+              <span class="label-text">Rua</span>
+              <div class="input-group grid-cols-[auto_1fr]">
+                <div class="ig-cell preset-tonal"><MapPinned size={16} /></div>
+                <input type="text" class="ig-input" bind:value={rua} disabled={salvando} placeholder="Ex: Rua das Flores" />
+              </div>
+            </label>
+
+            <label class="label">
+              <span class="label-text">Número</span>
+              <div class="input-group grid-cols-[auto_1fr]">
+                <div class="ig-cell preset-tonal"><span class="text-xs font-bold">#</span></div>
+                <input type="text" class="ig-input" bind:value={numero} disabled={salvando} placeholder="123" />
+              </div>
+            </label>
+
+            <label class="label">
+              <span class="label-text">Complemento</span>
+              <input type="text" class="input" bind:value={complemento} disabled={salvando} placeholder="Sala 2, Fundos..." />
+            </label>
+
+            <label class="label">
+              <span class="label-text">Bairro</span>
+              <input type="text" class="input" bind:value={bairro} disabled={salvando} placeholder="Centro" />
+            </label>
+
+            <label class="label">
+              <span class="label-text">Cidade</span>
+              <input type="text" class="input" bind:value={cidade} disabled={salvando} placeholder="São Paulo" />
+            </label>
+
+            <label class="label">
+              <span class="label-text">Estado</span>
+              <input
+                type="text"
+                class="input uppercase"
+                bind:value={estado}
+                disabled={salvando}
+                maxlength="2"
+                placeholder="UF"
+              />
+            </label>
+
+            <label class="label md:col-span-2">
+              <span class="label-text">CEP</span>
+              <div class="input-group grid-cols-[auto_1fr]">
+                <div class="ig-cell preset-tonal">CEP</div>
+                <input
+                  type="text"
+                  class="ig-input"
+                  bind:value={cep}
+                  disabled={salvando}
+                  oninput={aplicarMascaraCEP}
+                  placeholder="00000-000"
+                />
+              </div>
+            </label>
+          </div>
+        </section>
+
+        <section class="card overflow-hidden preset-outlined-surface-200-800 bg-surface-50-950">
+          <header class="flex items-center gap-2 border-b border-surface-200-800 bg-surface-100-900/10 p-4">
+            <Phone size={18} class="text-primary-500" />
+            <h2 class="text-sm font-bold uppercase tracking-wider">
+              Contato
+            </h2>
+          </header>
+
+          <div class="grid grid-cols-1 gap-6 p-6">
+            <label class="label">
+              <span class="label-text">Telefone Principal *</span>
+              <div class="input-group grid-cols-[auto_1fr]">
+                <div class="ig-cell preset-tonal"><Phone size={16} /></div>
+                <input
+                  type="text"
+                  class="ig-input"
+                  bind:value={telefonePrincipal}
+                  disabled={salvando}
+                  oninput={() => aplicarMascaraTelefone("principal")}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+            </label>
+
+            <label class="label">
+              <span class="label-text">Telefone Secundário</span>
+              <div class="input-group grid-cols-[auto_1fr]">
+                <div class="ig-cell preset-tonal"><Phone size={16} /></div>
+                <input
+                  type="text"
+                  class="ig-input"
+                  bind:value={telefoneSecundario}
+                  disabled={salvando}
+                  oninput={() => aplicarMascaraTelefone("secundario")}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+            </label>
+
+            <label class="label">
+              <span class="label-text">E-mail</span>
+              <div class="input-group grid-cols-[auto_1fr]">
+                <div class="ig-cell preset-tonal"><Mail size={16} /></div>
+                <input
+                  type="email"
+                  class="ig-input"
+                  bind:value={email}
+                  disabled={salvando}
+                  placeholder="contato@fornecedor.com"
+                />
+              </div>
+            </label>
+          </div>
+        </section>
       </div>
 
-      <div class="form-group">
-        <label for="nomeFantasia">Nome Fantasia *</label>
-        <input
-          type="text"
-          id="nomeFantasia"
-          bind:value={nomeFantasia}
-          disabled={salvando}
-          required
-        />
-      </div>
+      <section class="card overflow-hidden preset-outlined-surface-200-800 bg-surface-50-950">
+        <header class="flex items-center gap-2 border-b border-surface-200-800 bg-surface-100-900/10 p-4">
+          <UserRound size={18} class="text-primary-500" />
+          <h2 class="text-sm font-bold uppercase tracking-wider">
+            Representante
+          </h2>
+        </header>
 
-      <div class="form-group">
-        <label for="tipoDocumento">Tipo de Documento *</label>
-        <select
-          id="tipoDocumento"
-          bind:value={tipoDocumento}
+        <div class="grid grid-cols-1 gap-6 p-6 lg:grid-cols-3">
+          <label class="label lg:col-span-1">
+            <span class="label-text">Nome</span>
+            <div class="input-group grid-cols-[auto_1fr]">
+              <div class="ig-cell preset-tonal"><UserRound size={16} /></div>
+              <input
+                type="text"
+                class="ig-input"
+                bind:value={representanteNome}
+                disabled={salvando}
+                placeholder="Nome do responsável"
+              />
+            </div>
+          </label>
+
+          <label class="label">
+            <span class="label-text">Telefone</span>
+            <div class="input-group grid-cols-[auto_1fr]">
+              <div class="ig-cell preset-tonal"><Phone size={16} /></div>
+              <input
+                type="text"
+                class="ig-input"
+                bind:value={representanteTelefone}
+                disabled={salvando}
+                oninput={() => aplicarMascaraTelefone("representante")}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+          </label>
+
+          <label class="label">
+            <span class="label-text">E-mail</span>
+            <div class="input-group grid-cols-[auto_1fr]">
+              <div class="ig-cell preset-tonal"><Mail size={16} /></div>
+              <input
+                type="email"
+                class="ig-input"
+                bind:value={representanteEmail}
+                disabled={salvando}
+                placeholder="representante@fornecedor.com"
+              />
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section class="card preset-tonal-primary space-y-3 p-6">
+        <h3 class="flex items-center gap-2 font-bold">
+          <CircleCheck size={18} />
+          Dica rápida
+        </h3>
+        <p class="text-sm opacity-85">
+          O formulário aceita máscara visual, mas os dados são validados na gravação.
+          Preencha pelo menos um contato do representante para concluir o cadastro.
+        </p>
+      </section>
+
+      <footer class="flex flex-col gap-4 pb-12 sm:flex-row sm:items-center sm:justify-end">
+        <button
+          type="button"
+          onclick={limparFormulario}
+          class="btn preset-tonal-surface w-full gap-2 sm:w-auto"
           disabled={salvando}
-          onchange={() => {
-            documento = "";
-          }}
         >
-          <option value="CNPJ">CNPJ</option>
-          <option value="CPF">CPF</option>
-        </select>
-      </div>
+          <Eraser size={18} />
+          <span>Limpar</span>
+        </button>
 
-      <div class="form-group">
-        <label for="documento">{tipoDocumento} *</label>
-        <input
-          type="text"
-          id="documento"
-          bind:value={documento}
+        <button
+          type="button"
+          onclick={() => goto("/app/fornecedores")}
+          class="btn preset-tonal-surface hover:preset-tonal-error w-full sm:w-auto"
           disabled={salvando}
-          oninput={aplicarMascaraDocumento}
-          required
-          placeholder={tipoDocumento === "CNPJ"
-            ? "00.000.000/0000-00"
-            : "000.000.000-00"}
-        />
-      </div>
-    </div>
+        >
+          Cancelar
+        </button>
 
-    <!-- Endereço -->
-    <div class="section">
-      <h2>Endereço</h2>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="rua">Rua</label>
-          <input type="text" id="rua" bind:value={rua} disabled={salvando} />
-        </div>
-
-        <div class="form-group">
-          <label for="numero">Número</label>
-          <input
-            type="text"
-            id="numero"
-            bind:value={numero}
-            disabled={salvando}
-          />
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="complemento">Complemento</label>
-          <input
-            type="text"
-            id="complemento"
-            bind:value={complemento}
-            disabled={salvando}
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="bairro">Bairro</label>
-          <input
-            type="text"
-            id="bairro"
-            bind:value={bairro}
-            disabled={salvando}
-          />
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="cidade">Cidade</label>
-          <input
-            type="text"
-            id="cidade"
-            bind:value={cidade}
-            disabled={salvando}
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="estado">Estado</label>
-          <input
-            type="text"
-            id="estado"
-            bind:value={estado}
-            disabled={salvando}
-            maxlength="2"
-            placeholder="UF"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="cep">CEP</label>
-          <input
-            type="text"
-            id="cep"
-            bind:value={cep}
-            disabled={salvando}
-            oninput={aplicarMascaraCEP}
-            placeholder="00000-000"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Contato -->
-    <div class="section">
-      <h2>Contato</h2>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="telefonePrincipal">Telefone Principal</label>
-          <input
-            type="text"
-            id="telefonePrincipal"
-            bind:value={telefonePrincipal}
-            disabled={salvando}
-            oninput={() => aplicarMascaraTelefone("principal")}
-            placeholder="(00) 00000-0000"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="telefoneSecundario">Telefone Secundário</label>
-          <input
-            type="text"
-            id="telefoneSecundario"
-            bind:value={telefoneSecundario}
-            disabled={salvando}
-            oninput={() => aplicarMascaraTelefone("secundario")}
-            placeholder="(00) 00000-0000"
-          />
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" bind:value={email} disabled={salvando} />
-      </div>
-    </div>
-
-    <!-- Representante -->
-    <div class="section">
-      <h2>Representante</h2>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="representanteNome">Nome</label>
-          <input
-            type="text"
-            id="representanteNome"
-            bind:value={representanteNome}
-            disabled={salvando}
-          />
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="representanteTelefone">Telefone</label>
-          <input
-            type="text"
-            id="representanteTelefone"
-            bind:value={representanteTelefone}
-            disabled={salvando}
-            oninput={() => aplicarMascaraTelefone("representante")}
-            placeholder="(00) 00000-0000"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="representanteEmail">Email</label>
-          <input
-            type="email"
-            id="representanteEmail"
-            bind:value={representanteEmail}
-            disabled={salvando}
-          />
-        </div>
-      </div>
-    </div>
-
-    {#if erro}
-      <div class="error">
-        <strong>Erro:</strong>
-        {erro}
-      </div>
-    {/if}
-
-    <div class="actions">
-      <button type="submit" disabled={salvando}>
-        {salvando ? "Salvando..." : isEditing ? "Atualizar" : "Adicionar"}
-      </button>
-
-      <button type="button" onclick={limparFormulario} disabled={salvando}>
-        Limpar
-      </button>
-
-      <button
-        type="button"
-        onclick={() => goto("/app/fornecedores")}
-        disabled={salvando}
-      >
-        Cancelar
-      </button>
-    </div>
-  </form>
+        <button
+          type="submit"
+          class="btn preset-filled-primary-500 w-full min-w-[160px] gap-2 sm:w-auto"
+          disabled={salvando}
+        >
+          <Save size={18} />
+          <span>{isEditing ? "Atualizar Fornecedor" : "Salvar Fornecedor"}</span>
+        </button>
+      </footer>
+    </form>
+  {/if}
 </div>
 
 <style>
-  .section {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 20px;
-    margin-bottom: 20px;
-    background-color: #f9f9f9;
-  }
-
-  .section h2 {
-    margin-top: 0;
-    color: #333;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 10px;
-  }
-
-  .form-row {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-  }
-
-  .form-group {
-    flex: 1;
-    margin-bottom: 15px;
-  }
-
-  .form-group:last-child {
-    margin-bottom: 0;
-  }
-
-  label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: #555;
-  }
-
-  input,
-  select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-    font-size: 14px;
-  }
-
-  input:focus,
-  select:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-  }
-
-  .actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px solid #ddd;
-  }
-
-  .actions button {
-    padding: 12px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-  }
-
-  .actions button[type="submit"] {
-    background-color: #007bff;
-    color: white;
-  }
-
-  .actions button[type="submit"]:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-
-  .actions button:not([type="submit"]) {
-    background-color: #6c757d;
-    color: white;
-  }
-
-  .error {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 16px;
-  }
-
-  .success {
-    color: #155724;
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 16px;
-  }
-
-  h1 {
-    color: #333;
-    margin-bottom: 20px;
+  @keyframes -global-custom-animation {
+    from {
+      scale: 0.5 1;
+      transform: translateX(-200%);
+    }
+    25% {
+      transform: translateX(50%);
+    }
+    50% {
+      transform: translateX(-50%);
+    }
+    75% {
+      transform: translateX(150%);
+    }
+    to {
+      scale: 0.5 1;
+      transform: translateX(200%);
+    }
   }
 </style>
