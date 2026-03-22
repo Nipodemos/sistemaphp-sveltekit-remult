@@ -11,8 +11,6 @@
     Eraser,
     Info,
     CheckCircle,
-    AlertCircle,
-    ChevronRight,
     Tag,
     CircleAlert,
     CircleCheck,
