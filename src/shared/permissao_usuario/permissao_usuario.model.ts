@@ -17,9 +17,7 @@ import { Usuario } from "$shared/usuario/usuario.model";
   },
 })
 export class PermissaoUsuario {
-  @Relations.toOne(() => Usuario, {
-    dbName: "usuario_id",
-  })
+  @Relations.toOne(() => Usuario, "usuarioId")
   usuario?: Usuario;
 
   @Fields.string({
