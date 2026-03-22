@@ -108,7 +108,7 @@
   <h1>Listagem de Fornecedores</h1>
 
   <div>
-    <a href="/app/fornecedores/gerenciar-novo">
+    <a href="/app/fornecedores/criar_editar?id=novo">
       <button>Adicionar Fornecedor</button>
     </a>
   </div>
@@ -164,7 +164,9 @@
               <td>{fornecedor.email}</td>
               <td>{fornecedor.representanteNome}</td>
               <td>
-                <a href="/app/fornecedores/gerenciar-{fornecedor.id}">Editar</a>
+                <a href={`/app/fornecedores/criar_editar?id=${fornecedor.id}`}
+                  >Editar</a
+                >
                 <button onclick={() => excluirFornecedor(fornecedor)}
                   >Excluir</button
                 >
@@ -185,7 +187,9 @@
 
       {#if fornecedores.length === 0}
         <p>Nenhum fornecedor encontrado.</p>
-        <a href="/app/fornecedores/gerenciar-novo">Adicionar primeiro fornecedor</a>
+        <a href="/app/fornecedores/criar_editar?id=novo"
+          >Adicionar primeiro fornecedor</a
+        >
       {/if}
     </div>
   {/if}

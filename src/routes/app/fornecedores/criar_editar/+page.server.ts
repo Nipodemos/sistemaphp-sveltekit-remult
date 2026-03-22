@@ -3,16 +3,16 @@ import type { PageServerLoad } from "./$types";
 import { repo } from "remult";
 import { Fornecedor } from "$shared/fornecedor/fornecedor.model";
 
-export const load = (async ({ locals, params }) => {
+export const load = (async ({ locals, url }) => {
   // Verificar se o usuário está logado
   if (!locals.session) {
     throw redirect(302, "/login");
   }
 
-  const id = params.id;
+  const id = url.searchParams.get("id");
 
   // Se id for "novo", é adicao
-  if (id === "novo") {
+  if (id === "novo" || !id) {
     // Verificar permissao para adicionar fornecedores
     if (
       !locals.session.user.permissoesCompletas?.fornecedores?.adicionar

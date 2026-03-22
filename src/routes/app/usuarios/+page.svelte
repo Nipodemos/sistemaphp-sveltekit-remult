@@ -2,7 +2,6 @@
   import { repo } from "remult";
   import { Usuario } from "../../../shared/usuario/usuario.model";
   import { Pencil, Trash, Plus } from "@lucide/svelte";
-  import { route } from "$lib/ROUTES";
 
   let usuarios = $state<Usuario[]>([]);
 
@@ -24,7 +23,7 @@
   <header class="flex justify-between items-center mb-4">
     <h1 class="h1">Lista de usuários</h1>
     <a
-      href={route("/app/usuarios/gerenciar-[id]", { id: "novo" })}
+      href="/app/usuarios/criar_editar?id=novo"
       class="btn preset-filled-primary"
     >
       <Plus class="size-4" />
@@ -60,9 +59,7 @@
                 <div class="flex gap-2">
                   <a
                     class="btn preset-filled-primary size-sm"
-                    href={route("/app/usuarios/gerenciar-[id]", {
-                      id: usuario.id,
-                    })}
+                    href={`/app/usuarios/criar_editar?id=${usuario.id}`}
                   >
                     <Pencil class="size-4" />
                     Editar

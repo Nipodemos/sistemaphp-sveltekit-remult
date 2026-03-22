@@ -2,7 +2,6 @@
   import { repo } from "remult";
   import { Tela } from "../../../shared/tela/tela.model";
   import { Pencil } from "@lucide/svelte";
-  import { route } from "$lib/ROUTES";
 
   let telas = $state<Tela[]>([]);
 
@@ -36,9 +35,7 @@
                 <div class="flex gap-2">
                   <a
                     class="btn preset-filled-primary size-sm"
-                    href={route("/app/telas/gerenciar-[id]", {
-                      id: tela.id,
-                    })}
+                    href={`/app/telas/criar_editar?id=${tela.id}`}
                   >
                     <Pencil class="size-4" />
                     Editar
