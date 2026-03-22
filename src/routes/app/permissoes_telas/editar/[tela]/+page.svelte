@@ -11,6 +11,7 @@
       id: string;
       nome: string;
       login: string;
+      isAdmin: boolean;
       permissoes: Record<string, boolean>;
     }>;
     permissoesDisponiveis: MetadadoPermissao[];
@@ -20,12 +21,17 @@
 
   let usuariosModificados = new Set<string>();
   let salvando = false;
+  let erroLocal = "";
 
   // Função para marcar/desmarcar todas as permissões de uma coluna
   function toggleColuna(permissao: string) {
-    const algumMarcado = data.usuarios.some((u) => u.permissoes[permissao]);
+    const algumMarcado = data.usuarios
+      .filter((u) => !u.isAdmin)
+      .some(
+      (u) => u.permissoes[permissao],
+    );
 
-    data.usuarios.forEach((usuario) => {
+    data.usuarios.filter((u) => !u.isAdmin).forEach((usuario) => {
       usuario.permissoes[permissao] = !algumMarcado;
       usuariosModificados.add(usuario.id);
     });
@@ -35,6 +41,11 @@
   function toggleLinha(usuarioId: string) {
     const usuario = data.usuarios.find((u) => u.id === usuarioId);
     if (!usuario) return;
+
+    if (usuario.isAdmin) {
+      erroLocal = "Administradores não podem ter permissões modificadas.";
+      return;
+    }
 
     const algumaPermissaoMarcada = Object.values(usuario.permissoes).some(
       Boolean,
@@ -48,23 +59,27 @@
   }
 
   // Função chamada quando uma permissão individual é alterada
-  function onPermissaoChange(usuarioId: string) {
-    usuariosModificados.add(usuarioId);
-  }
-
-  // Verificar se uma coluna tem alguma permissão marcada
-  function colunaTemAlgumaPermissao(permissao: string): boolean {
-    return data.usuarios.some((u) => u.permissoes[permissao]);
-  }
-
-  // Verificar se uma linha (usuário) tem alguma permissão marcada
-  function linhaTemAlgumaPermissao(usuarioId: string): boolean {
+  function onPermissaoChange(
+    usuarioId: string,
+    permissao: string,
+    checked: boolean,
+  ) {
     const usuario = data.usuarios.find((u) => u.id === usuarioId);
-    if (!usuario) return false;
-    return Object.values(usuario.permissoes).some(Boolean);
+    if (!usuario) return;
+
+    if (usuario.isAdmin && !checked) {
+      usuario.permissoes[permissao] = true;
+      erroLocal = "Administradores não podem ter permissões modificadas.";
+      return;
+    }
+
+    usuariosModificados.add(usuarioId);
+    erroLocal = "";
   }
 
-  $: permissoesKeys = data.permissoesDisponiveis.map((permissao) => permissao.chave);
+  $: permissoesKeys = data.permissoesDisponiveis.map(
+    (permissao) => permissao.chave,
+  );
 </script>
 
 <svelte:head>
@@ -103,6 +118,14 @@
     </div>
   {/if}
 
+  {#if erroLocal}
+    <div
+      class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6"
+    >
+      {erroLocal}
+    </div>
+  {/if}
+
   <form method="POST" action="?/salvar" use:enhance>
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
       <div class="overflow-x-auto">
@@ -120,14 +143,16 @@
                 >
                   <div class="flex flex-col items-center">
                     <span class="text-xs mb-1"
-                      >{data.permissoesDisponiveis.find((item) => item.chave === permissao)?.descricao}</span
+                      >{data.permissoesDisponiveis.find(
+                        (item) => item.chave === permissao,
+                      )?.descricao}</span
                     >
                     <button
                       type="button"
                       on:click={() => toggleColuna(permissao)}
                       class="text-blue-600 hover:text-blue-800 text-sm font-medium"
                     >
-                      {#if colunaTemAlgumaPermissao(permissao)}
+                      {#if data.usuarios.filter((u) => !u.isAdmin).some((u) => u.permissoes[permissao])}
                         Desmarcar todos
                       {:else}
                         Marcar todos
@@ -149,8 +174,17 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
                     <div>
-                      <div class="text-sm font-medium text-gray-900">
-                        {usuario.nome}
+                      <div class="flex items-center gap-2">
+                        <div class="text-sm font-medium text-gray-900">
+                          {usuario.nome}
+                        </div>
+                        {#if usuario.isAdmin}
+                          <span
+                            class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800"
+                          >
+                            Administrador
+                          </span>
+                        {/if}
                       </div>
                       <div class="text-sm text-gray-500">{usuario.login}</div>
                     </div>
@@ -163,23 +197,34 @@
                       name={`usuario_${usuario.id}_${permissao}`}
                       value="on"
                       bind:checked={usuario.permissoes[permissao]}
-                      on:change={() => onPermissaoChange(usuario.id)}
+                      on:change={(e) =>
+                        onPermissaoChange(
+                          usuario.id,
+                          permissao,
+                          e.currentTarget.checked,
+                        )}
                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                   </td>
                 {/each}
                 <td class="px-4 py-4 text-center">
-                  <button
-                    type="button"
-                    on:click={() => toggleLinha(usuario.id)}
-                    class="text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    {#if linhaTemAlgumaPermissao(usuario.id)}
-                      Remover todas
-                    {:else}
-                      Conceder todas
-                    {/if}
-                  </button>
+                  {#if usuario.isAdmin}
+                    <span class="text-sm font-medium text-amber-700"
+                      >Bloqueado</span
+                    >
+                  {:else}
+                    <button
+                      type="button"
+                      on:click={() => toggleLinha(usuario.id)}
+                      class="text-blue-600 hover:text-blue-800 text-sm"
+                    >
+                      {#if Object.values(usuario.permissoes).some(Boolean)}
+                        Remover todas
+                      {:else}
+                        Conceder todas
+                      {/if}
+                    </button>
+                  {/if}
                 </td>
               </tr>
             {/each}

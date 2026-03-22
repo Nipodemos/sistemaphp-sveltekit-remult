@@ -10,6 +10,14 @@ import {
 import { error, fail } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
+function ehCargoAdministrador(cargos: readonly string[] | undefined): boolean {
+  const cargosNormalizados = (cargos ?? []).map((cargo) =>
+    cargo.trim().toLowerCase(),
+  );
+
+  return cargosNormalizados.includes("administrador");
+}
+
 export const load: PageServerLoad = async ({ params }) => {
   const tela = params.tela as Tela;
 
@@ -41,24 +49,28 @@ export const load: PageServerLoad = async ({ params }) => {
   // Preparar dados para o frontend
   const usuariosComPermissoes = usuarios.map((usuario) => {
     const permissoesUsuario = permissoesPorUsuario.get(usuario.id) || [];
+    const isAdmin = ehCargoAdministrador(usuario.cargos);
     const permissoesObj: Record<string, boolean> = {};
 
     // Inicializar todas as permissões da tela como false
     METADADOS_TELAS[tela].permissoes.forEach(({ chave }) => {
-      permissoesObj[chave] = false;
+      permissoesObj[chave] = isAdmin;
     });
 
-    // Marcar as permissões ativas como true
-    permissoesUsuario.forEach((permissao) => {
-      if (permissao.regra in permissoesObj) {
-        permissoesObj[permissao.regra] = permissao.permitido;
-      }
-    });
+    if (!isAdmin) {
+      // Marcar as permissões ativas como true
+      permissoesUsuario.forEach((permissao) => {
+        if (permissao.regra in permissoesObj) {
+          permissoesObj[permissao.regra] = permissao.permitido;
+        }
+      });
+    }
 
     return {
       id: usuario.id,
       nome: usuario.nome,
       login: usuario.login,
+      isAdmin,
       permissoes: permissoesObj,
     };
   });
@@ -82,7 +94,25 @@ export const actions = {
 
     try {
       const data = await request.formData();
+      const usuarios = await remult.repo(Usuario).find();
+      const administradores = new Set(
+        usuarios.filter((usuario) => ehCargoAdministrador(usuario.cargos)).map((usuario) => usuario.id),
+      );
       const permissoesRepo = remult.repo(PermissaoUsuario);
+      const permissoesDaTela = METADADOS_TELAS[tela].permissoes.map(
+        (permissao) => permissao.chave,
+      );
+
+      for (const usuarioId of administradores) {
+        for (const permissao of permissoesDaTela) {
+          if (data.get(`usuario_${usuarioId}_${permissao}`) !== "on") {
+            return fail(400, {
+              error:
+                "Administradores não podem ter permissões modificadas.",
+            });
+          }
+        }
+      }
 
       // Primeiro, apagar todas as permissões existentes da tela
       await permissoesRepo.deleteMany({
