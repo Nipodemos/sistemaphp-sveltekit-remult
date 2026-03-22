@@ -194,9 +194,7 @@ const criarPermissoesCompletas = (): PermissoesCompletas => {
 const ehCargoAdministrador = (cargos: readonly string[]): boolean => {
   const cargosNormalizados = cargos.map((cargo) => cargo.trim().toLowerCase());
 
-  return cargosNormalizados.some((cargo) =>
-    ["admin", "administrador", "master"].includes(cargo),
-  );
+  return cargosNormalizados.includes("administrador");
 };
 
 export const METADADOS_TELAS = criarMetadadosTelas();
